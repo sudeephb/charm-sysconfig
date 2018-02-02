@@ -1,0 +1,37 @@
+# Copyright 2018 Canonical Ltd.
+#
+# This file is part of the SYSConfig Charm for Juju.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3, as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranties of
+# MERCHANTABILITY, SATISFACTORY QUALITY, or FITNESS FOR A PARTICULAR
+# PURPOSE.  See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+name: sysconfig
+summary: System related configurations
+maintainer: Alvaro Uría <alvaro.uria@canonical.com>
+description: >
+  SYSConfig can configure cpufreq governor (ie powersave, performance),
+  and CPU Affinity or Kernel's isolcpus details in systemd-sytem.conf
+  or Grub. It can also configure HugePages on Grub.
+tags:
+  - cpu
+  - memory
+  - hugepages
+  - performance
+  - affinity
+  - isolcpus
+series:
+  - xenial
+subordinate: true
+requires:
+  juju-info:
+    interface: juju-info
+    scope: container
