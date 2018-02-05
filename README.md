@@ -5,13 +5,13 @@ configure a type of CPU reservation: isolcpus or CPU Affinity.
 
 # Usage
 
-Deploy cpuconfig alongside your service,
+Deploy sysconfig alongside your service,
 
-    juju deploy cpuconfig
+    juju deploy sysconfig
 
 Add the relations: 
 
-    juju add-relation cpuconfig os-cs-vnf
+    juju add-relation sysconfig os-cs-vnf
 
 # Configuration
 

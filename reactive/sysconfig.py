@@ -146,14 +146,11 @@ def config_changed():
 
     # update-grub if /etc/default/grub changed
     # (or notify it is needed)
-    current_states = get_states()
-    if 'sysconfig.needs-update-grub' in current_states:
-        hookenv.status_set('blocked', 'update-grub needs to be run')
-    elif helpers.any_file_changed([GRUB_CONF]) and \
-            config['update-grub'] == 'false':
-        hookenv.status_set('blocked', 'update-grub needs to be run')
-        set_state('sysconfig.needs-update-grub')
+    if helpers.any_file_changed([GRUB_CONF]) and \
+            config['update-grub'] == 'false' and \
+            grubfile_updated:
+        hookenv.log('[*] DEBUG: update-grub needs to be run')
     else:
-        # FIXME: if "update-grub" is true, this will mislead
-        remove_state('sysconfig.needs-update-grub')
-        hookenv.status_set('active', 'Ready')
+        # FIXME(aluria): update-grub should actually be run
+        hookenv.log('[*] DEBUG: update-grub needs to be run')
+    hookenv.status_set('active', 'Ready')
