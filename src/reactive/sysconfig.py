@@ -28,15 +28,8 @@ from charms.reactive import (
     when_none,
     when_not,
     set_flag,
-    # clear_flag,
 )
-# from charms.reactive.bus import get_states
-
-# from charmhelpers import context
-from charmhelpers.core import (
-    hookenv,
-    host,
-)
+from charmhelpers.core import host
 
 
 @when_none('sysconfig.installed', 'sysconfig.unsupported')
@@ -53,7 +46,7 @@ def install():
 @when('config.changed')
 def config_changed():
     syshelper = SysconfigHelper()
-    hookenv.status_set('maintenance', 'Applying changes')
+    status.maintenance('Applying changes')
 
     # cpufreq
     if syshelper.charm_config.changed('governor') \
@@ -68,7 +61,7 @@ def config_changed():
         syshelper.update_grub_file(
             syshelper.reservation == 'isolcpus')
         syshelper.update_systemd_system_file(
-            syshelper.reservation == 'cpuaffinity')
+            syshelper.reservation == 'affinity')
         updated = True
 
     # GRUB reconfig (if not already done)
@@ -87,7 +80,8 @@ def config_changed():
             boot_changes.append(filename)
 
     if boot_changes:
-        status.active('Reboot required. Changes in: ',
-                      ', '.join(boot_changes))
+        status.active('Reboot required. Changes in: {}'.format(
+            ', '.join(boot_changes))
+        )
     else:
         status.active('Ready')

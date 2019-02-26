@@ -1,0 +1,5 @@
+#!/usr/local/sbin/charm-env python3
+
+from charmhelpers.core.hookenv import status_set
+
+status_set('active', 'Ready')

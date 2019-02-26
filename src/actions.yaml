@@ -1,0 +1,2 @@
+clear-notification:
+  description: "juju status will show 'Ready' on the description"
