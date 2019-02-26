@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 options:
-  reservation: 
+  reservation:
     type: string
     default: "off"
     description: |
@@ -24,7 +24,7 @@ options:
         affinity (CPU Affinity) is a systemd configuration parameter.
         Other processes inherit from systemd-system.conf
         off (default) disables any CPU reservation on host-side.
-  cpu-range: 
+  cpu-range:
     type: string
     default: ""
     description: |
@@ -42,25 +42,24 @@ options:
     type: string
     default: ""
     description: |
-        Number of hugepages. Example: 448
+        Number of hugepages. Example: 400
   update-grub:
     type: boolean
     default: false
-    description: | 
+    description: |
         Allows the charm to run "update-grub" command if
         /etc/default/grub was changed
         .
         This is discouraged and by default it is disabled.
-  config-flags: 
+  config-flags:
     default: ""
-    type: string 
+    type: string
     description: |
         If extra lines need to be configured on /etc/default/grub
         (isolcpus) or /etc/systemd/system.conf (affinity), this string
         can be used as a list in yaml format.
-        Sample: |
-           key1=value1
-           key2=value2
+        Sample:
+          {'grub': 'key1=value1, key2=value2', 'systemd': 'key1=value1'}
   governor:
     type: string
     default: ""

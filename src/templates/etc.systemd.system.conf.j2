@@ -61,3 +61,8 @@ CPUAffinity={{ cpuaffinity }}
 #DefaultLimitNICE=
 #DefaultLimitRTPRIO=
 #DefaultLimitRTTIME=
+
+# config-flags
+{% for key, value in systemd_config_flags.items() -%}
+{{ key }}={{ value }}
+{% endfor -%}

@@ -17,6 +17,7 @@
 includes:
     - layer:basic
     - layer:apt
+    - layer:status
 options:
     basic:
         use_venv: true

@@ -1,31 +1,25 @@
-# Copyright 2018 Canonical Ltd.
-#
-# This file is part of the SYSConfig Charm for Juju.
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3, as
-# published by the Free Software Foundation.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranties of
-# MERCHANTABILITY, SATISFACTORY QUALITY, or FITNESS FOR A PARTICULAR
-# PURPOSE.  See the GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+help:
+	@echo "This project supports the following targets"
+	@echo ""
+	@echo " make help - show this text"
+	@echo " make test - run the functional test and unittests"
+	@echo " make unittest - run the the unittest"
+	@echo " make functionaltest - run the functional tests"
+	@echo " make clean - remove unneeded files"
+	@echo ""
 
-.PHONY: lint
-lint:
-	tox -e lint
+test: unittest functionaltest lint
 
-.PHONY: build
-build: realclean
-	@charm build
+unittest:
+	@tox -e unit
 
-.PHONY: clean
-clean: 
-	git clean -fXd
+functionaltest:
+	@tox -e functional
 
-.PHONY: realclean
-realclean:
-	git clean -fxd
+clean:
+	@echo "Cleaning files"
+	@if [ -d ./.tox ] ; then rm -r ./.tox ; fi
+	@if [ -d ./.pytest_cache ] ; then rm -r ./.pytest_cache ; fi
+
+# The targets below don't depend on a file
+.PHONY: lint test unittest functionaltest clean help
