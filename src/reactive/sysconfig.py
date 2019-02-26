@@ -14,9 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import logging
-import re
-
 from lib_sysconfig import (
     CPUFREQUTILS,
     GRUB_CONF,
@@ -31,7 +28,7 @@ from charms.reactive import (
     when_none,
     when_not,
     set_flag,
-    clear_flag,
+    # clear_flag,
 )
 # from charms.reactive.bus import get_states
 
