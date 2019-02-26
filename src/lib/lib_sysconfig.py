@@ -54,7 +54,7 @@ class SysconfigHelper():
     def update_grub_file(self, isolcpus):
         if isolcpus:
             isolcpus = self.cpu_range
-        extra_flags = self.extra_flags.get('grub', {})
+        extra_flags = self.extra_flags.get('grub', '')
         context = {'cpu_range': isolcpus,
                    'hugepagesz': self._hugepagesz,
                    'hugepages': self._hugepages,
@@ -70,7 +70,7 @@ class SysconfigHelper():
     def update_systemd_system_file(self, cpuaffinity):
         if cpuaffinity:
             cpuaffinity = self.cpu_range
-        extra_flags = self.extra_flags.get('systemd', {})
+        extra_flags = self.extra_flags.get('systemd', '')
         context = {'cpuaffinity': cpuaffinity,
                    'systemd_config_flags': config_flags_parser(extra_flags)}
         render(source=SYSTEMD_SYSTEM_TMPL, templates_dir='templates',

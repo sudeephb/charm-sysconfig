@@ -16,8 +16,8 @@
 
 name: sysconfig
 summary: System related configurations
-maintainer: Alvaro Uría <alvaro.uria@canonical.com>
-description: >
+maintainer: Alvaro Uria <alvaro.uria@canonical.com>
+description: |
   SYSConfig can configure cpufreq governor (ie powersave, performance),
   and CPU Affinity or Kernel's isolcpus details in systemd-sytem.conf
   or Grub. It can also configure HugePages on Grub.
