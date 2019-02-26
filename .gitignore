@@ -1,11 +1,19 @@
-*.pyc
-*~
+# Byte-compiled / optimized / DLL files
 __pycache__/
-.cache/
-*.swp
-/.tox/
-.unit-state.db
-.go-cookies
-.idea
-builds/
-deps/
+*.py[cod]
+*$py.class
+
+# Log files
+*.log
+
+.tox/
+.coverage
+
+# vi
+.*.swp
+
+# pycharm
+.idea/
+
+# version data
+src/repo-info

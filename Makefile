@@ -1,31 +1,50 @@
-# Copyright 2018 Canonical Ltd.
-#
-# This file is part of the SYSConfig Charm for Juju.
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3, as
-# published by the Free Software Foundation.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranties of
-# MERCHANTABILITY, SATISFACTORY QUALITY, or FITNESS FOR A PARTICULAR
-# PURPOSE.  See the GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ifndef JUJU_REPOSITORY
+    JUJU_REPOSITORY := $(shell pwd)
+    $(warning Warning JUJU_REPOSITORY was not set, defaulting to $(JUJU_REPOSITORY))
+endif
 
-.PHONY: lint
+help:
+	@echo "This project supports the following targets"
+	@echo ""
+	@echo " make help - show this text"
+	@echo " make submodules - make sure that the submodules are up-to-date"
+	@echo " make lint - run flake8"
+	@echo " make test - run the unittests and lint"
+	@echo " make unittest - run the tests defined in the unittest subdirectory"
+	@echo " make functional - run the tests defined in the functional subdirectory"
+	@echo " make release - build the charm"
+	@echo " make clean - remove unneeded files"
+	@echo ""
+
+submodules:
+	@echo "Cloning submodules"
+	@git submodule update --init --recursive
+
 lint:
-	tox -e lint
+	@echo "Running flake8"
+	@cd src && tox -e lint
 
-.PHONY: build
-build: realclean
-	@charm build
+test: unittest functional lint
 
-.PHONY: clean
-clean: 
-	git clean -fXd
+unittest:
+	@cd src && tox -e unit
 
-.PHONY: realclean
-realclean:
-	git clean -fxd
+functional: build
+	@cd src && tox -e functional
+
+build:
+	@echo "Building charm to base directory $(JUJU_REPOSITORY)"
+	@-git describe --tags > ./src/repo-info
+	@LAYER_PATH=./layers INTERFACE_PATH=./interfaces TERM=linux\
+		JUJU_REPOSITORY=$(JUJU_REPOSITORY) charm build ./src --force
+
+release: clean build
+	@echo "Charm is built at $(JUJU_REPOSITORY)/builds"
+
+clean:
+	@echo "Cleaning files"
+	@if [ -d src/.tox ] ; then rm -r src/.tox ; fi
+	@if [ -d src/.pytest_cache ] ; then rm -r src/.pytest_cache ; fi
+
+# The targets below don't depend on a file
+.PHONY: lint test unittest functional build release clean help submodules
