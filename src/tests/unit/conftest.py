@@ -59,12 +59,6 @@ def sysconfig(tmpdir, mock_hookenv_config, mock_charm_dir, monkeypatch):
     from lib_sysconfig import SysconfigHelper
     helper = SysconfigHelper()
 
-    # Example config file patching
-    cfg_file = tmpdir.join('example.cfg')
-    with open('./tests/unit/example.cfg', 'r') as src_file:
-        cfg_file.write(src_file.read())
-    helper.example_config_file = cfg_file.strpath
-
     # Any other functions that load helper will get this version
     monkeypatch.setattr('lib_sysconfig.SysconfigHelper', lambda: helper)
 

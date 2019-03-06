@@ -49,8 +49,7 @@ def config_changed():
     status.maintenance('Applying changes')
 
     # cpufreq
-    if syshelper.charm_config.changed('governor') \
-            or helpers.any_file_changed([CPUFREQUTILS]):
+    if syshelper.charm_config.changed('governor') or helpers.any_file_changed([CPUFREQUTILS]):
         syshelper.update_cpufreq()
 
     # GRUB or systemd reconfiguration
@@ -58,16 +57,12 @@ def config_changed():
     if (syshelper.charm_config.changed('reservation') or
             syshelper.charm_config.changed('cpu-range')) and \
             syshelper.reservation in ('isolcpus', 'affinity', 'off'):
-        syshelper.update_grub_file(
-            syshelper.reservation == 'isolcpus')
-        syshelper.update_systemd_system_file(
-            syshelper.reservation == 'affinity')
+        syshelper.update_grub_file(syshelper.reservation == 'isolcpus')
+        syshelper.update_systemd_system_file(syshelper.reservation == 'affinity')
         updated = True
 
     # GRUB reconfig (if not already done)
-    if (syshelper.charm_config.changed('hugepagesz') or
-            syshelper.charm_config.changed('hugepages')) and \
-            not updated:
+    if (syshelper.charm_config.changed('hugepagesz') or syshelper.charm_config.changed('hugepages')) and not updated:
         syshelper.update_grub_file(syshelper.reservation == 'isolcpus')
 
     if syshelper.charm_config.changed('config-flags') and not updated:
@@ -80,8 +75,6 @@ def config_changed():
             boot_changes.append(filename)
 
     if boot_changes:
-        status.active('Reboot required. Changes in: {}'.format(
-            ', '.join(boot_changes))
-        )
+        status.active('Reboot required. Changes in: {}'.format(', '.join(boot_changes)))
     else:
         status.active('Ready')

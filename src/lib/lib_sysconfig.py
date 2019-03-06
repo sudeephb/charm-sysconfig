@@ -31,8 +31,7 @@ class SysconfigHelper():
         if self._governor not in ('performance', 'powersave'):
             return
         context = {'governor': self._governor}
-        render(source=CPUFREQUTILS_TMPL, templates_dir='templates',
-               target=CPUFREQUTILS, context=context)
+        render(source=CPUFREQUTILS_TMPL, templates_dir='templates', target=CPUFREQUTILS, context=context)
         host.service_restart('cpufrequtils')
 
     @property
@@ -51,38 +50,41 @@ class SysconfigHelper():
     def _hugepages(self):
         return self.charm_config['hugepages']
 
-    def update_grub_file(self, isolcpus):
+    def update_grub_file(self, isolcpus=False):
+        """Renders a new grub configuration file which will be parsed last, at '/etc/default/grub.d'.
+
+        The file will include hugepages reservation. Isolcpus is optional, since CPUAffinity is also supported.
+
+        config-flags charm parameter can share values under a 'grub' key. Those values will be consequently parsed
+        and included as extra key=value rows.
+        """
         if isolcpus:
             isolcpus = self.cpu_range
         extra_flags = self.extra_flags.get('grub', '')
-        context = {'cpu_range': isolcpus,
-                   'hugepagesz': self._hugepagesz,
-                   'hugepages': self._hugepages,
+        context = {'cpu_range': isolcpus, 'hugepagesz': self._hugepagesz, 'hugepages': self._hugepages,
                    'grub_config_flags': config_flags_parser(extra_flags)}
-        render(source=GRUB_CONF_TMPL, templates_dir='templates',
-               target=GRUB_CONF, context=context)
-        hookenv.log('grub file update: isolcpus={cpu_range}, '
-                    'hugepagesz={hugepagesz}, '
-                    'hugepages={hugepages}, '
-                    'config-flags={grub_config_flags}'.format(**context),
-                    'DEBUG')
+        render(source=GRUB_CONF_TMPL, templates_dir='templates', target=GRUB_CONF, context=context)
+        hookenv.log('grub file update: isolcpus={cpu_range}, hugepagesz={hugepagesz}, hugepages={hugepages}, '
+                    'config-flags={grub_config_flags}'.format(**context), 'DEBUG')
 
     def update_systemd_system_file(self, cpuaffinity):
+        """Renders a new systemd configuration file which will overwrite '/etc/systemd/system.conf'.
+
+        The file will optionally include CPUAffinity ranges, since Isolcpus is also supported supported.
+
+        config-flags charm parameter can share values under a 'grub' key. Those values will be consequently
+        parsed and included as extra key=value rows.
+        """
         if cpuaffinity:
             cpuaffinity = self.cpu_range
         extra_flags = self.extra_flags.get('systemd', '')
-        context = {'cpuaffinity': cpuaffinity,
-                   'systemd_config_flags': config_flags_parser(extra_flags)}
-        render(source=SYSTEMD_SYSTEM_TMPL, templates_dir='templates',
-               target=SYSTEMD_SYSTEM, context=context)
-        hookenv.log('systemd-system.conf update: '
-                    'CPUAffinity={cpuaffinity}, '
-                    'config-flags={systemd_config_flags}'.format(**context),
-                    'DEBUG')
+        context = {'cpuaffinity': cpuaffinity, 'systemd_config_flags': config_flags_parser(extra_flags)}
+        render(source=SYSTEMD_SYSTEM_TMPL, templates_dir='templates', target=SYSTEMD_SYSTEM, context=context)
+        hookenv.log('systemd-system.conf update: CPUAffinity={cpuaffinity}, '
+                    'config-flags={systemd_config_flags}'.format(**context), 'DEBUG')
 
     def update_config_flags(self):
-        for k in self.extra_flags:
-            if k == 'grub':
-                self.update_grub_file(self.reservation == 'isolcpus')
-            elif k == 'systemd':
-                self.update_systemd_system_file(self.reservation == 'affinity')
+        if 'grub' in self.extra_flags:
+            self.update_grub_file(self.reservation == 'isolcpus')
+        if 'systemd' in self.extra_flags:
+            self.update_systemd_system_file(self.reservation == 'affinity')
