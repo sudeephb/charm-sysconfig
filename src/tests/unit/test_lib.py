@@ -20,8 +20,7 @@ class TestLib():
     def test_config_flags(self, config):
         config.return_value = {
             'config-flags': (
-                "{'grub': 'GRUB_DEFAULT=\"Advanced options for "
-                "Ubuntu>Ubuntu, with Linux 4.15.0-38-generic\"'}"
+                "{'grub': 'GRUB_DEFAULT=\"Advanced options for Ubuntu>Ubuntu, with Linux 4.15.0-38-generic\"'}"
                 ),
         }
         sysh = lib_sysconfig.SysconfigHelper()
