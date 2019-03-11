@@ -18,6 +18,7 @@ from lib_sysconfig import (
     CPUFREQUTILS,
     GRUB_CONF,
     SYSTEMD_SYSTEM,
+    KERNEL,
     SysconfigHelper,
 )
 
@@ -28,6 +29,7 @@ from charms.reactive import (
     when_none,
     when_not,
     set_flag,
+    hook,
 )
 from charmhelpers.core import host
 
@@ -68,13 +70,14 @@ def config_changed():
     if syshelper.charm_config.changed('config-flags') and not updated:
         syshelper.update_config_flags()
 
-    # update-grub needed
-    boot_changes = []
-    for filename in (GRUB_CONF, SYSTEMD_SYSTEM):
-        if helpers.any_file_changed([filename]):
-            boot_changes.append(filename)
+    update_status()
 
+
+@hook('update-status')
+def update_status():
+    resources = [KERNEL, CPUFREQUTILS, SYSTEMD_SYSTEM, GRUB_CONF]
+    boot_changes = SysconfigHelper.boot_resources.resources_changed_since_boot(resources)
     if boot_changes:
-        status.active('Reboot required. Changes in: {}'.format(', '.join(boot_changes)))
+        status.active("Reboot required. Changes in: {}".format(", ".join(boot_changes)))
     else:
-        status.active('Ready')
+        status.active("Ready")
