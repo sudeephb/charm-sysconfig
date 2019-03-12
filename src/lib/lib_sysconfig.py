@@ -1,10 +1,12 @@
 import subprocess
 
 from datetime import datetime, timedelta, timezone
+from subprocess import check_output
 
 from charmhelpers.core import hookenv, host, unitdata
 from charmhelpers.core.templating import render
 from charmhelpers.contrib.openstack.utils import config_flags_parser
+from charmhelpers.fetch import apt_install, apt_update
 
 CPUFREQUTILS_TMPL = 'cpufrequtils.j2'
 GRUB_CONF_TMPL = 'grub.j2'
@@ -14,6 +16,7 @@ CPUFREQUTILS = '/etc/default/cpufrequtils'
 # GRUB_CONF = '/etc/default/grub'
 GRUB_CONF = '/etc/default/grub.d/90-sysconfig.cfg'
 SYSTEMD_SYSTEM = '/etc/systemd/system.conf'
+KERNEL = 'kernel'
 
 
 def boot_time():
@@ -21,6 +24,10 @@ def boot_time():
         uptime_seconds = float(f.readline().split()[0])
         boot_time = datetime.now(timezone.utc) - timedelta(seconds=uptime_seconds)
         return boot_time
+
+
+def running_kernel():
+    return check_output(['uname', '-r']).decode('UTF-8').strip()
 
 
 class BootResourceState:
@@ -111,6 +118,10 @@ class SysconfigHelper():
     def _hugepages(self):
         return self.charm_config['hugepages']
 
+    @property
+    def kernel_version(self):
+        return self.charm_config['kernel-version']
+
     def update_grub_file(self, isolcpus=False):
         """Renders a new grub configuration file which will be parsed last, at '/etc/default/grub.d'.
 
@@ -149,3 +160,18 @@ class SysconfigHelper():
             self.update_grub_file(self.reservation == 'isolcpus')
         if 'systemd' in self.extra_flags:
             self.update_systemd_system_file(self.reservation == 'affinity')
+
+    def install_configured_kernel(self):
+        """Install kernel as given by the kernel-version config option
+
+        Will install kernel and matching modules-extra package
+        """
+        configured = self.kernel_version
+        if configured == running_kernel():
+            hookenv.log("Already running kernel: {}".format(configured))
+            return
+        pkgs = [tmpl.format(configured) for tmpl in ["linux-image-{}", "linux-modules-extra-{}"]]
+        apt_update()
+        apt_install(pkgs)
+        hookenv.log("Installing: {}".format(pkgs))
+        self.boot_resources.set_resource(KERNEL)

@@ -66,3 +66,9 @@ options:
     description: |
         Configured via cpufrequtils, possible values are powersave or
         performance
+  kernel-version:
+    type: string
+    default: ""
+    description: |
+        Upgrade kernel and modules-extra package to this version. Does
+        nothing if same kernel already running.

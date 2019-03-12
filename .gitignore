@@ -14,6 +14,8 @@ __pycache__/
 
 # pycharm
 .idea/
+.unit-state.db
+src/.unit-state.db
 
 # version data
 src/repo-info
