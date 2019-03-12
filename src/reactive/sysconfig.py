@@ -24,11 +24,11 @@ from lib_sysconfig import (
 from charms.layer import status
 from charms.reactive import (
     helpers,
+    hook,
+    set_flag,
     when,
     when_none,
     when_not,
-    set_flag,
-    hook,
 )
 from charmhelpers.core import host
 
@@ -56,7 +56,7 @@ def config_changed():
     # GRUB or systemd reconfiguration
     updated = False
     if (syshelper.charm_config.changed('reservation') or
-            syshelper.charm_config.changed('cpu-range')) and \
+        syshelper.charm_config.changed('cpu-range')) and \
             syshelper.reservation in ('isolcpus', 'affinity', 'off'):
         syshelper.update_grub_file(syshelper.reservation == 'isolcpus')
         syshelper.update_systemd_system_file(syshelper.reservation == 'affinity')

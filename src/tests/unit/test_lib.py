@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 from collections import OrderedDict
-from datetime import datetime
+from datetime import datetime, timezone
 
 import unittest.mock as mock
 
@@ -12,36 +12,36 @@ class TestBootResourceState:
 
     def boot_resource(self):
         db = mock.MagicMock()
-        db.get.return_value = datetime(2019, 1, 1).strftime("%Y-%m-%dT%H:%M:%S")
+        db.get.return_value = datetime(2019, 1, 1, tzinfo=timezone.utc).timestamp()
         return lib_sysconfig.BootResourceState(db=db)
 
     @mock.patch("lib_sysconfig.datetime")
     def test_set_resource(self, mock_datetime):
-        jan1 = datetime(2019, 1, 1)
-        mock_datetime.now.return_value = jan1
+        test_time = datetime(2019, 1, 1, tzinfo=timezone.utc)
+        mock_datetime.now.return_value = test_time
         boot_resource = self.boot_resource()
         boot_resource.set_resource("foofile")
         assert boot_resource.db.set.call_count == 1
         set_args = boot_resource.db.set.call_args[0]
         assert set_args[0] == "sysconfig.boot_resource.foofile"
-        dt = datetime.strptime(set_args[1], "%Y-%m-%dT%H:%M:%S")
-        assert dt == jan1
+        dt = datetime.fromtimestamp(set_args[1], timezone.utc)
+        assert dt == test_time
 
     def test_get_resource(self):
-        jan1 = datetime(2019, 1, 1)
+        test_time = datetime(2019, 1, 1, tzinfo=timezone.utc)
         boot_resource = self.boot_resource()
         timestamp = boot_resource.get_resource_changed_timestamp("foofile")
-        assert timestamp == jan1
+        assert timestamp == test_time
 
     def test_get_unknown_resource(self):
         boot_resource = self.boot_resource()
         boot_resource.db = dict()  # plant empty dataset
         timestamp = boot_resource.get_resource_changed_timestamp("unregfile")
-        assert timestamp == datetime.min
+        assert timestamp == datetime.min.replace(tzinfo=timezone.utc)
 
     @mock.patch("lib_sysconfig.boot_time")
     def test_resources_changed_since_dawn_of_time(self, mock_boot_time):
-        mock_boot_time.return_value = datetime.min
+        mock_boot_time.return_value = datetime.min.replace(tzinfo=timezone.utc)
         boot_resource = self.boot_resource()
         changed = boot_resource.resources_changed_since_boot(["foofile"])
         assert len(changed) == 1
@@ -49,7 +49,7 @@ class TestBootResourceState:
 
     @mock.patch("lib_sysconfig.boot_time")
     def test_resources_changed_future(self, mock_boot_time):
-        mock_boot_time.return_value = datetime.max
+        mock_boot_time.return_value = datetime.max.replace(tzinfo=timezone.utc)
         boot_resource = self.boot_resource()
         changed = boot_resource.resources_changed_since_boot(["foofile"])
         assert not changed

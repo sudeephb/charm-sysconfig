@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from charmhelpers.core import hookenv, host, unitdata
 from charmhelpers.core.templating import render
@@ -17,8 +17,8 @@ SYSTEMD_SYSTEM = '/etc/systemd/system.conf'
 def boot_time():
     with open('/proc/uptime', 'r') as f:
         uptime_seconds = float(f.readline().split()[0])
-        boot_since = datetime.now() - timedelta(seconds=uptime_seconds)
-        return boot_since
+        boot_time = datetime.now(timezone.utc) - timedelta(seconds=uptime_seconds)
+        return boot_time
 
 
 class BootResourceState:
@@ -32,9 +32,8 @@ class BootResourceState:
         return "sysconfig.boot_resource.{}".format(resource_name)
 
     def set_resource(self, resource_name):
-        timestamp = datetime.now()  # Naive datetime, as we do not expect transfer across timezones
-        tstr = timestamp.strftime('%Y-%m-%dT%H:%M:%S')
-        self.db.set(self.key_for(resource_name), tstr)
+        timestamp = datetime.now(timezone.utc)
+        self.db.set(self.key_for(resource_name), timestamp.timestamp())
 
     def get_resource_changed_timestamp(self, resource_name):
         """Retrieve timestamp of last resource change recorded
@@ -42,12 +41,17 @@ class BootResourceState:
         :param resource_name: resource to check
         :return: datetime of resource change, or datetime.min if resource not registered
         """
-        tstr = self.db.get(self.key_for(resource_name))
-        if tstr is not None:
-            return datetime.strptime(tstr, '%Y-%m-%dT%H:%M:%S')
-        return datetime.min  # We don't have a ts -> changed at dawn of time
+        tfloat = self.db.get(self.key_for(resource_name))
+        if tfloat is not None:
+            return datetime.fromtimestamp(tfloat, timezone.utc)
+        return datetime.min.replace(tzinfo=timezone.utc)  # We don't have a ts -> changed at dawn of time
 
     def resources_changed_since_boot(self, resource_names):
+        """Given a list of resource names return those that have changed since boot
+
+        :param resource_names: list of names
+        :return: list of names
+        """
         boot_ts = boot_time()
         changed = [name for name in resource_names if boot_ts < self.get_resource_changed_timestamp(name)]
         return changed
