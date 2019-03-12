@@ -214,3 +214,30 @@ class TestSysconfigHelper:
             templates_dir="templates",
             context=expected,
         )
+
+    @mock.patch("lib_sysconfig.hookenv.config")
+    @mock.patch("lib_sysconfig.hookenv.log")
+    @mock.patch("lib_sysconfig.apt_install")
+    @mock.patch("lib_sysconfig.apt_update")
+    def test_install_configured_kernel(self, apt_update, apt_install, log, config):
+        config.return_value = {"kernel-version": "4.x.bogus"}
+        sysh = lib_sysconfig.SysconfigHelper()
+        sysh.install_configured_kernel()
+        assert apt_update.call_count == 1
+        assert apt_install.call_count == 1
+        assert apt_install.call_args[0][0] == ['linux-image-4.x.bogus', 'linux-modules-extra-4.x.bogus']
+
+    @mock.patch("lib_sysconfig.hookenv.config")
+    @mock.patch("lib_sysconfig.hookenv.log")
+    @mock.patch("lib_sysconfig.apt_install")
+    @mock.patch("lib_sysconfig.apt_update")
+    @mock.patch("lib_sysconfig.running_kernel")
+    def test_install_configured_kernel_unchanged(self, running_kernel, apt_update, apt_install, log, config):
+        config.return_value = {"kernel-version": "old-value"}
+        running_kernel.return_value = "old-value"
+        sysh = lib_sysconfig.SysconfigHelper()
+        sysh.install_configured_kernel()
+        assert apt_update.call_count == 0
+        assert apt_install.call_count == 0
+        assert log.call_count == 1
+        assert log.call_args[0][0] == "Already running kernel: old-value"

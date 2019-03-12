@@ -14,12 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from lib_sysconfig import (
-    CPUFREQUTILS,
-    GRUB_CONF,
-    SYSTEMD_SYSTEM,
-    SysconfigHelper,
-)
+from lib_sysconfig import CPUFREQUTILS, GRUB_CONF, SYSTEMD_SYSTEM, KERNEL, SysconfigHelper
 
 from charms.layer import status
 from charms.reactive import (
@@ -69,12 +64,16 @@ def config_changed():
     if syshelper.charm_config.changed('config-flags') and not updated:
         syshelper.update_config_flags()
 
+    # Update kernel version
+    if syshelper.charm_config.changed('kernel-version'):
+        syshelper.install_configured_kernel()
+
     update_status()
 
 
 @hook('update-status')
 def update_status():
-    resources = [CPUFREQUTILS, SYSTEMD_SYSTEM, GRUB_CONF]
+    resources = [KERNEL, CPUFREQUTILS, SYSTEMD_SYSTEM, GRUB_CONF]
     boot_changes = SysconfigHelper.boot_resources.resources_changed_since_boot(resources)
     if boot_changes:
         status.active("Reboot required. Changes in: {}".format(", ".join(boot_changes)))
