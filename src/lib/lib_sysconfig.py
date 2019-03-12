@@ -12,7 +12,6 @@ CPUFREQUTILS = '/etc/default/cpufrequtils'
 # GRUB_CONF = '/etc/default/grub'
 GRUB_CONF = '/etc/default/grub.d/90-sysconfig.cfg'
 SYSTEMD_SYSTEM = '/etc/systemd/system.conf'
-KERNEL = 'kernel'
 
 
 def boot_time():
