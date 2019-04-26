@@ -1,3 +1,5 @@
+import subprocess
+
 from datetime import datetime, timedelta, timezone
 
 from charmhelpers.core import hookenv, host, unitdata
@@ -84,6 +86,13 @@ class SysconfigHelper():
             return
         context = {'governor': self._governor}
         self._render_boot_resource(CPUFREQUTILS_TMPL, CPUFREQUTILS, context)
+        # Ensure the ondemand initscript is disabled, lp#1822774 and lp#740127
+        if host.get_distrib_codename() == 'xenial':
+            hookenv.log('Disabling the ondemand initscript for lp#1822774'
+                        ' and lp#740127', 'DEBUG')
+            subprocess.check_call(
+                    ['/usr/sbin/update-rc.d', '-f', 'ondemand', 'remove']
+            )
         host.service_restart('cpufrequtils')
 
     @property
