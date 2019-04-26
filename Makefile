@@ -1,4 +1,4 @@
-PROJECTPATH = $(dir $(realpath $(firstword $(MAKEFILE_LIST))))
+PROJECTPATH = $(dir $(realpath $(MAKEFILE_LIST)))
 
 ifndef CHARM_BUILD_DIR
     CHARM_BUILD_DIR := $(PROJECTPATH)/builds
@@ -35,7 +35,7 @@ release: clean build
 
 clean:
 	@echo "Cleaning files"
-	@if [ -d $(PROJECTPATH)/builds ] ; then rm -r $(PROJECTPATH)/builds ; fi
+	@if [ -d $(CHARM_BUILD_DIR) ] ; then rm -r $(CHARM_BUILD_DIR) ; fi
 	@if [ -d $(PROJECTPATH)/src/.tox ] ; then rm -r $(PROJECTPATH)/src/.tox ; fi
 	@if [ -d $(PROJECTPATH)/src/.pytest_cache ] ; then rm -r $(PROJECTPATH)/src/.pytest_cache ; fi
 
