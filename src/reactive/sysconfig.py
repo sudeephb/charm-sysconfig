@@ -74,7 +74,7 @@ def config_changed():
 
 @hook('update-status')
 def update_status():
-    resources = [CPUFREQUTILS, SYSTEMD_SYSTEM, GRUB_CONF]
+    resources = [SYSTEMD_SYSTEM, GRUB_CONF]
     boot_changes = SysconfigHelper.boot_resources.resources_changed_since_boot(resources)
     if boot_changes:
         status.active("Reboot required. Changes in: {}".format(", ".join(boot_changes)))
