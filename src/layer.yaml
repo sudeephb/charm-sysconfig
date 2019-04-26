@@ -18,6 +18,7 @@ includes:
     - layer:basic
     - layer:apt
     - layer:status
+    - interface:juju-info
 options:
     basic:
         use_venv: true
