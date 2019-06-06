@@ -1,7 +1,7 @@
+import os
 import subprocess
 
 from datetime import datetime, timedelta, timezone
-from subprocess import check_output
 
 from charmhelpers.core import hookenv, host, unitdata
 from charmhelpers.core.templating import render
@@ -27,7 +27,7 @@ def boot_time():
 
 
 def running_kernel():
-    return check_output(['uname', '-r']).decode('UTF-8').strip()
+    return os.uname().release
 
 
 class BootResourceState:
