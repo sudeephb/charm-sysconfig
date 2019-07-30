@@ -52,21 +52,24 @@ def config_changed():
     updated = False
     if (syshelper.charm_config.changed('reservation') or
         syshelper.charm_config.changed('cpu-range')) and \
-            syshelper.reservation in ('isolcpus', 'affinity', 'off'):
+            syshelper.reservation in ('isolcpus', 'affinity'):
         syshelper.update_grub_file(syshelper.reservation == 'isolcpus')
         syshelper.update_systemd_system_file(syshelper.reservation == 'affinity')
         updated = True
 
-    # GRUB reconfig (if not already done)
-    if (syshelper.charm_config.changed('hugepagesz') or syshelper.charm_config.changed('hugepages')) and not updated:
-        syshelper.update_grub_file(syshelper.reservation == 'isolcpus')
+    # Ensure that at least one of the Grub parameters is not empty
+    if (syshelper._hugepagesz or syshelper._hugepages or syshelper.config_flags() or syshelper.kernel_version):
+        # GRUB reconfig (if not already done)
+        if (syshelper.charm_config.changed('hugepagesz') or syshelper.charm_config.changed('hugepages')) and \
+                not updated:
+            syshelper.update_grub_file(syshelper.reservation == 'isolcpus')
 
-    if syshelper.charm_config.changed('config-flags') and not updated:
-        syshelper.update_config_flags()
+        if syshelper.charm_config.changed('config-flags') and not updated:
+            syshelper.update_config_flags()
 
-    # Update kernel version
-    if syshelper.charm_config.changed('kernel-version'):
-        syshelper.install_configured_kernel()
+        # Update kernel version
+        if syshelper.charm_config.changed('kernel-version'):
+            syshelper.install_configured_kernel()
 
     update_status()
 
