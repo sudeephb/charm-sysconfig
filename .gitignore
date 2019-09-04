@@ -18,4 +18,8 @@ __pycache__/
 src/.unit-state.db
 
 # version data
-src/repo-info
+repo-info
+
+
+# reports
+report/*
