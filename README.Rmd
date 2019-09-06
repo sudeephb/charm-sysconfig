@@ -9,7 +9,7 @@ Deploy sysconfig alongside your service,
 
     juju deploy sysconfig
 
-Add the relations: 
+Add the relations:
 
     juju add-relation sysconfig os-cs-vnf
 
@@ -38,7 +38,7 @@ reservation=isolcpus).
 
 ## config-flags
 
-If you need further options configured, this extra optons will be added
+If you need further options configured, this extra options will be added
 to the files:
  * `/etc/default/grub` (reservation=isolcpus)
  * `/etc/systemd/system.conf` (reservation=affinity)
@@ -47,4 +47,4 @@ It does nothing if reservation=off.
 
 # Contact Information
 
-- Charm bugs: https://bugs.launchpad.net/bootstack-ops
+- Charm bugs: https://bugs.launchpad.net/charm-sysconfig

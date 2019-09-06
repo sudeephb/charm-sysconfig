@@ -1,0 +1,108 @@
+# Copyright 2019 Canonical Ltd.
+#
+# This file is part of the SYSConfig Charm for Juju.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3, as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranties of
+# MERCHANTABILITY, SATISFACTORY QUALITY, or FITNESS FOR A PARTICULAR
+# PURPOSE.  See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+options:
+  enable-container:
+    type: boolean
+    default: false
+    description: |
+        Enable support for containers.
+        For testing purpose only.
+  reservation:
+    type: string
+    default: "off"
+    description: |
+        Type of CPU reservation: isolcpus, affinity, off
+        isolcpus is a kernel cmdline paremeter
+        affinity (CPU Affinity) is a systemd configuration parameter.
+        Other processes inherit from systemd-system.conf
+        off (default) disables any CPU reservation on host-side.
+  cpu-range:
+    type: string
+    default: ""
+    description: |
+        Single pcpus (0,1,2) or range of pcpus (0-10) to isolate (if
+        isolcpus is selected) or reserve (if affinity is selected).
+        Default value (empty) will make "reservation" work as if it was
+        "off".
+  hugepages:
+    type: string
+    default: ""
+    description: |
+        Number of hugepages. Example: 400
+  hugepagesz:
+    type: string
+    default: ""
+    description: |
+        Size of each hugepage. Example: 1G
+  raid-autodetection:
+    type: string
+    default: ""
+    description: |
+        Configure raid detection. Possible value are
+        - '': (default) autodetection enabled if md module is compiled into the kernel
+        - 'noautodetect': autodetection is disabled
+        - 'partitionable': all auto-detected arrays are assembled as partitionable
+  enable-pti:
+    type: boolean
+    default: false
+    description: |
+        Allow enabling/disabling page table isolation, adding pti=off to grub cmdline
+  enable-iommu:
+    type: boolean
+    default: false
+    description: |
+        If true and VT-d enabled in the BIOS, it will allow to use direct I/O
+        bypassing DMA translation with pci-passthrough devices.
+        Enable it to use SR-IOV
+  grub-config-flags:
+    default: ""
+    type: string
+    description: |
+        If extra lines need to be configured on /etc/default/grub
+        this string can be used as a list of key/value pairs
+        'key1=value1,key2=value2'
+  kernel-version:
+    type: string
+    default: ""
+    description: |
+        Upgrade kernel and modules-extra package to this version and add GRUB_DEFAULT to
+        /etc/default/grub to loaded the required kernel version. Does
+        nothing if same kernel already running.
+  update-grub:
+    type: boolean
+    default: false
+    description: |
+        Allows the charm to run "update-grub" command if
+        /etc/default/grub was changed.
+        This is discouraged and by default it is disabled.
+  systemd-config-flags:
+    default: ""
+    type: string
+    description: |
+        If extra lines need to be configured on /etc/systemd/system.conf
+        this string can be used as a list of key/value pairs
+        'key1=value1,key2=value2'
+  governor:
+    type: string
+    default: ""
+    description: |
+        Configured via cpufrequtils, possible values are:
+        - '' (default): systemd will choose the first available between
+                        'ondemand', 'powersave', 'performance'.
+                        Recommended option when Bios control power is set to the OS.
+        - 'performance'
+        - 'powersave'

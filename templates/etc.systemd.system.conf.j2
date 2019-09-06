@@ -22,8 +22,8 @@
 #CrashShell=no
 #CrashReboot=no
 #CPUAffinity=1 2
-{% if cpuaffinity -%}
-CPUAffinity={{ cpuaffinity }}
+{% if cpu_range is defined -%}
+CPUAffinity={{ cpu_range }}
 {% endif -%}
 #JoinControllers=cpu,cpuacct net_cls,net_prio
 #RuntimeWatchdogSec=0
@@ -62,7 +62,9 @@ CPUAffinity={{ cpuaffinity }}
 #DefaultLimitRTPRIO=
 #DefaultLimitRTTIME=
 
+{% if systemd_config_flags is defined -%}
 # config-flags
 {% for key, value in systemd_config_flags.items() -%}
 {{ key }}={{ value }}
 {% endfor -%}
+{% endif -%}

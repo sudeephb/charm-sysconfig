@@ -1,0 +1,4 @@
+pytest
+charmhelpers
+juju
+charm-tools

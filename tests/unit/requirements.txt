@@ -3,4 +3,3 @@ charms.reactive
 mock
 pytest
 pytest-cov
-netifaces

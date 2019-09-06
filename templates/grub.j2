@@ -5,15 +5,28 @@
 # For full documentation of the options in this file, see:
 #   info -f grub -n 'Simple configuration'
 
-GRUB_CMDLINE_LINUX_DEFAULT="console=tty0 console=ttyS0,115200 console=ttyS1,115200 raid=noautodetect intel_iommu=on iommu=pt pti=off"
-{% if cpu_range -%}
+GRUB_CMDLINE_LINUX_DEFAULT="console=tty0 console=ttyS0,115200 console=ttyS1,115200"
+{% if cpu_range is defined -%}
 GRUB_CMDLINE_LINUX_DEFAULT="$GRUB_CMDLINE_LINUX_DEFAULT isolcpus={{ cpu_range }}"
 {% endif -%}
-{% if hugepagesz -%}
+{% if hugepagesz is defined -%}
 GRUB_CMDLINE_LINUX_DEFAULT="$GRUB_CMDLINE_LINUX_DEFAULT hugepagesz={{ hugepagesz }}"
 {% endif -%}
-{% if hugepages -%}
+{% if hugepages is defined -%}
 GRUB_CMDLINE_LINUX_DEFAULT="$GRUB_CMDLINE_LINUX_DEFAULT hugepages={{ hugepages }}"
+{% endif -%}
+{% if raid is defined -%}
+GRUB_CMDLINE_LINUX_DEFAULT="$GRUB_CMDLINE_LINUX_DEFAULT raid={{ raid }}"
+{% endif -%}
+{% if pti_off is defined -%}
+GRUB_CMDLINE_LINUX_DEFAULT="$GRUB_CMDLINE_LINUX_DEFAULT pti=off"
+{% endif -%}
+{% if iommu is defined -%}
+GRUB_CMDLINE_LINUX_DEFAULT="$GRUB_CMDLINE_LINUX_DEFAULT intel_iommu=on iommu=pt"
+{% endif -%}
+
+{% if grub_default is defined -%}
+GRUB_DEFAULT="{{ grub_default }}"
 {% endif -%}
 GRUB_CMDLINE_LINUX=""
 
@@ -21,7 +34,9 @@ GRUB_CMDLINE_LINUX=""
 #GRUB_TERMINAL=console
 GRUB_TERMINAL=serial
 
+{% if grub_config_flags is defined -%}
 # config-flags
 {% for key, value in grub_config_flags.items() -%}
 {{ key }}={{ value }}
 {% endfor -%}
+{% endif -%}

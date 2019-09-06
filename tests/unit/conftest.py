@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-import unittest.mock as mock
+import mock
 import pytest
 
 
@@ -44,22 +44,26 @@ def mock_hookenv_config(monkeypatch):
 
 @pytest.fixture
 def mock_remote_unit(monkeypatch):
-    monkeypatch.setattr(
-        'lib_sysconfig.hookenv.remote_unit', lambda: 'unit-mock/0')
+    monkeypatch.setattr('lib_sysconfig.hookenv.remote_unit', lambda: 'unit-mock/0')
 
 
 @pytest.fixture
 def mock_charm_dir(monkeypatch):
-    monkeypatch.setattr(
-        'lib_sysconfig.hookenv.charm_dir', lambda: '/mock/charm/dir')
+    monkeypatch.setattr('lib_sysconfig.hookenv.charm_dir', lambda: '/mock/charm/dir')
 
 
 @pytest.fixture
 def sysconfig(tmpdir, mock_hookenv_config, mock_charm_dir, monkeypatch):
-    from lib_sysconfig import SysconfigHelper
-    helper = SysconfigHelper()
+    from lib_sysconfig import SysConfigHelper
+    helper = SysConfigHelper()
+
+    # Example config file patching
+    cfg_file = tmpdir.join('example.cfg')
+    with open('./tests/unit/example.cfg', 'r') as src_file:
+        cfg_file.write(src_file.read())
+    helper.example_config_file = cfg_file.strpath
 
     # Any other functions that load helper will get this version
-    monkeypatch.setattr('lib_sysconfig.SysconfigHelper', lambda: helper)
+    monkeypatch.setattr('lib_sysconfig.SysConfigHelper', lambda: helper)
 
     return helper

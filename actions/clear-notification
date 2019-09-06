@@ -2,4 +2,4 @@
 
 from charmhelpers.core.hookenv import status_set
 
-status_set('active', 'Ready')
+status_set('active', 'ready')
