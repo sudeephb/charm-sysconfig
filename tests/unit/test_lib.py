@@ -77,7 +77,7 @@ class TestLib():
             templates_dir="templates",
             context=expected,
         )
-        check_call.assert_called_with(['/usr/sbin/update-rc.d', '-f', 'ondemand', 'remove'] )
+        check_call.assert_called_with(['/usr/sbin/update-rc.d', '-f', 'ondemand', 'remove', '>', '/dev/null', '2>&1'])
 
     @mock.patch("lib_sysconfig.subprocess.check_call")
     @mock.patch("lib_sysconfig.host.get_distrib_codename")
@@ -97,7 +97,7 @@ class TestLib():
             context=expected,
         )
         restart.assert_called()
-        check_call.assert_called_with(['/usr/sbin/update-rc.d', '-f', 'ondemand', 'defaults'])
+        check_call.assert_called_with(['/usr/sbin/update-rc.d', '-f', 'ondemand', 'defaults', '>', '/dev/null', '2>&1'])
 
     @mock.patch("lib_sysconfig.subprocess.check_call")
     @mock.patch("lib_sysconfig.host.get_distrib_codename")

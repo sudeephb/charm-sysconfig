@@ -225,16 +225,16 @@ class SysConfigHelper:
         context = {'governor': self.governor}
         self._render_boot_resource(CPUFREQUTILS_TMPL, CPUFREQUTILS, context)
         # Ensure the ondemand initscript is disabled if governor is set, lp#1822774 and lp#740127
-        if host.get_distrib_codename() == 'xenial':
+        if host.get_distrib_codename() == 'xenial' and not host.is_container():
             hookenv.log('disabling the ondemand initscript for lp#1822774'
                         ' and lp#740127 if a governor is specified',  hookenv.DEBUG)
             if self.governor:
                 subprocess.check_call(
-                        ['/usr/sbin/update-rc.d', '-f', 'ondemand', 'remove']
+                        ['/usr/sbin/update-rc.d', '-f', 'ondemand', 'remove', '>', '/dev/null', '2>&1']
                 )
             else:
                 subprocess.check_call(
-                    ['/usr/sbin/update-rc.d', '-f', 'ondemand', 'defaults']
+                    ['/usr/sbin/update-rc.d', '-f', 'ondemand', 'defaults', '>', '/dev/null', '2>&1']
                 )
 
         host.service_restart('cpufrequtils')
@@ -261,11 +261,11 @@ class SysConfigHelper:
 
     def remove_cpufreq_configuration(self):
         context = {}
-        if host.get_distrib_codename() == 'xenial':
+        if host.get_distrib_codename() == 'xenial' and not host.is_container():
             hookenv.log('Enabling the ondemand initscript for lp#1822774'
                         ' and lp#740127', 'DEBUG')
             subprocess.check_call(
-                    ['/usr/sbin/update-rc.d', '-f', 'ondemand', 'defaults']
+                    ['/usr/sbin/update-rc.d', '-f', 'ondemand', 'defaults', '>', '/dev/null', '2>&1']
             )
 
         self._render_boot_resource(CPUFREQUTILS_TMPL, CPUFREQUTILS, context)

@@ -9,9 +9,10 @@ pytestmark = pytest.mark.asyncio
 juju_repository = os.getenv('JUJU_REPOSITORY', '.').rstrip('/')
 
 series = ['xenial', 'bionic']
+
 sources = [('local', '{}/builds/sysconfig'.format(juju_repository))]
 
-TIMEOUT = 6000
+TIMEOUT = 600
 GRUB_DEFAULT = 'Advanced options for Ubuntu>Ubuntu, with Linux {}'
 PRINCIPAL_APP_NAME = 'ubuntu-{}'
 
@@ -200,11 +201,8 @@ async def test_config_changed(app, model, jujutools):
 
     systemd_path = '/etc/systemd/system.conf'
     systemd_content = await jujutools.file_contents(systemd_path, unit)
-    systemd_valid = False
-    for line in systemd_content:
-        if line.startswith('CPUAffinity=1,2,3,4'):
-            systemd_valid = True
-    assert systemd_valid
+
+    assert 'CPUAffinity=1,2,3,4' in systemd_content
 
     assert 'DefaultLimitRTTIME=1' in systemd_content
     assert 'DefaultTasksMax=10' in systemd_content
@@ -224,6 +222,7 @@ async def test_config_changed(app, model, jujutools):
 
     # test update-status show that reboot is required
     assert "reboot required." in unit.workload_status_message
+
 
 async def test_clear_notification(app):
      unit = app.units[0]
@@ -326,10 +325,12 @@ async def test_uninstall(app, model, jujutools, series):
     )
 
     principal_app_name = PRINCIPAL_APP_NAME.format(series)
-    principal_app = await model._wait_for_new('application', principal_app_name)
+    principal_app = model.applications[principal_app_name]
+
     await app.destroy_relation('juju-info', '{}:juju-info'.format(principal_app_name))
+
     await model.block_until(
-        lambda: principal_app.status == 'active',
+        lambda: len(app.units) == 0,
         timeout=TIMEOUT
     )
 
@@ -341,14 +342,8 @@ async def test_uninstall(app, model, jujutools, series):
 
     systemd_path = '/etc/systemd/system.conf'
     systemd_content = await jujutools.file_contents(systemd_path, unit)
-    systemd_valid = True
-    for line in systemd_content:
-        if line.startswith('CPUAffinity=1,2,3,4'):
-            systemd_valid = False
-
-    assert systemd_valid
+    assert 'CPUAffinity=1,2,3,4' not in systemd_content
 
     cpufreq_path = '/etc/default/cpufrequtils'
     cpufreq_content = await jujutools.file_contents(cpufreq_path, unit)
     assert 'GOVERNOR' not in cpufreq_content
-
