@@ -1,19 +1,25 @@
 #!/usr/bin/python3
+"""Unit tests for SysConfigHelper and BootResourceState classes."""
+
+from datetime import datetime, timezone
 
 import lib_sysconfig
+
 import mock
-from datetime import datetime, timezone
 
 
 class TestBootResourceState:
+    """Test BootResourceState class."""
 
     def boot_resource(self):
+        """Mock unitdata.kv()."""
         db = mock.MagicMock()
         db.get.return_value = datetime(2019, 1, 1, tzinfo=timezone.utc).timestamp()
         return lib_sysconfig.BootResourceState(db=db)
 
     @mock.patch("lib_sysconfig.datetime")
     def test_set_resource(self, mock_datetime):
+        """Test updating resource entry in the db."""
         test_time = datetime(2019, 1, 1, tzinfo=timezone.utc)
         mock_datetime.now.return_value = test_time
         boot_resource = self.boot_resource()
@@ -25,12 +31,17 @@ class TestBootResourceState:
         assert dt == test_time
 
     def test_get_resource(self):
+        """Test retrieving timestamp of last resource update."""
         test_time = datetime(2019, 1, 1, tzinfo=timezone.utc)
         boot_resource = self.boot_resource()
         timestamp = boot_resource.get_resource_changed_timestamp("foofile")
         assert timestamp == test_time
 
     def test_get_unknown_resource(self):
+        """Test retrieving timestamp of resource not in the db.
+
+        time.now is returned.
+        """
         boot_resource = self.boot_resource()
         boot_resource.db = dict()  # plant empty dataset
         timestamp = boot_resource.get_resource_changed_timestamp("unregfile")
@@ -38,6 +49,7 @@ class TestBootResourceState:
 
     @mock.patch("lib_sysconfig.boot_time")
     def test_resources_changed_since_dawn_of_time(self, mock_boot_time):
+        """Test retrieving of resources changed since last boot."""
         mock_boot_time.return_value = datetime.min.replace(tzinfo=timezone.utc)
         boot_resource = self.boot_resource()
         changed = boot_resource.resources_changed_since_boot(["foofile"])
@@ -46,18 +58,22 @@ class TestBootResourceState:
 
     @mock.patch("lib_sysconfig.boot_time")
     def test_resources_changed_future(self, mock_boot_time):
+        """Test resource is not changed since last boot."""
         mock_boot_time.return_value = datetime.max.replace(tzinfo=timezone.utc)
         boot_resource = self.boot_resource()
         changed = boot_resource.resources_changed_since_boot(["foofile"])
         assert not changed
 
 
-class TestLib():
+class TestLib:
+    """Module to test SysConfigHelper lib."""
+
     def test_pytest(self):
+        """Assert testing is carryied using pytest."""
         assert True
 
     def test_sysconfig(self, sysconfig):
-        ''' See if the helper fixture works to load charm configs '''
+        """See if the helper fixture works to load charm configs."""
         assert isinstance(sysconfig.charm_config, dict)
 
     @mock.patch("lib_sysconfig.subprocess.check_call")
@@ -66,6 +82,11 @@ class TestLib():
     @mock.patch("lib_sysconfig.host.service_restart")
     @mock.patch("lib_sysconfig.render")
     def test_update_cpufreq(self, render, restart, config, codename, check_call):
+        """Set config governor=performance.
+
+        Expect /etc/default/cpufrequtils is rendered
+        and ondemand init script removed
+        """
         codename.return_value = "xenial"
         expected = {"governor": "performance"}
         config.return_value = expected
@@ -85,6 +106,11 @@ class TestLib():
     @mock.patch("lib_sysconfig.host.service_restart")
     @mock.patch("lib_sysconfig.render")
     def test_update_cpufreq_governor_default(self, render, restart, config, codename, check_call):
+        """Set config governor=''.
+
+        Expect /etc/default/cpufrequtils is rendered with no governor
+        and ondemand init script is installed
+        """
         codename.return_value = "xenial"
         expected = {"governor": ""}
         config.return_value = expected
@@ -105,6 +131,10 @@ class TestLib():
     @mock.patch("lib_sysconfig.host.service_restart")
     @mock.patch("lib_sysconfig.render")
     def test_update_cpufreq_governor_not_available(self, render, restart, config, codename, check_call):
+        """Set wrong governor.
+
+        Expect /etc/default/cpufrequtils is not rendered
+        """
         codename.return_value = "xenial"
         expected = {"governor": "wrong"}
         config.return_value = expected
@@ -119,6 +149,10 @@ class TestLib():
     @mock.patch("lib_sysconfig.hookenv.log")
     @mock.patch("lib_sysconfig.render")
     def test_update_grub_file(self, render, log, config, check_call):
+        """Update /etc/default/grub.d/90-sysconfig.cfg and update-grub true.
+
+        Expect file is rendered with correct config and updated-grub is called.
+        """
         config.return_value = {
             "reservation": "isolcpus",
             "cpu-range": "0-10",
@@ -157,6 +191,10 @@ class TestLib():
     @mock.patch("lib_sysconfig.hookenv.log")
     @mock.patch("lib_sysconfig.render")
     def test_update_grub_file_no_update_grub(self, render, log, config, check_call):
+        """Update /etc/default/grub.d/90-sysconfig.cfg and update-grub false.
+
+        Expect file is rendered with correct config and updated-grub is not called.
+        """
         config.return_value = {
             "reservation": "isolcpus",
             "cpu-range": "0-10",
@@ -195,6 +233,10 @@ class TestLib():
     @mock.patch("lib_sysconfig.hookenv.log")
     @mock.patch("lib_sysconfig.render")
     def test_update_systemd_system_file(self, render, log, config):
+        """Update /etc/default/grub.d/90-sysconfig.cfg and update-grub false.
+
+        Expect file is rendered with correct config and updated-grub is not called.
+        """
         config.return_value = {
             "reservation": "affinity",
             "cpu-range": "0-10",
@@ -224,6 +266,10 @@ class TestLib():
     @mock.patch("lib_sysconfig.running_kernel")
     @mock.patch("lib_sysconfig.hookenv.log")
     def test_install_configured_kernel_true(self, log, running_kernel, config, apt_update, apt_install):
+        """Set config kernel=4.15.0-38-generic and running kernel is different.
+
+        Expect apt install is called.
+        """
         config.return_value = {
             "kernel-version": "4.15.0-38-generic"
         }
@@ -242,6 +288,10 @@ class TestLib():
     @mock.patch("lib_sysconfig.running_kernel")
     @mock.patch("lib_sysconfig.hookenv.log")
     def test_install_configured_kernel_false(self, log, running_kernel, config, apt_update, apt_install):
+        """Set config kernel=4.15.0-38-generic and running kernel is the same.
+
+        Expect apt install is not called.
+        """
         kernel_version = "4.15.0-38-generic"
         config.return_value = {
             "kernel-version": kernel_version
@@ -259,6 +309,10 @@ class TestLib():
     @mock.patch("lib_sysconfig.running_kernel")
     @mock.patch("lib_sysconfig.hookenv.log")
     def test_install_configured_kernel_no_specified(self, log, running_kernel, config, apt_update, apt_install):
+        """Set config kernel=''.
+
+        Expect apt install is not called.
+        """
         config.return_value = {
             "kernel-version": ""
         }
@@ -273,22 +327,11 @@ class TestLib():
     @mock.patch("lib_sysconfig.os.remove")
     @mock.patch("lib_sysconfig.hookenv.log")
     @mock.patch("lib_sysconfig.os.path.exists")
-    def test_remove_grub_configuration(self, exists, log, os_remove, config):
-        config.return_value = {
-            "update-grub": False
-        }
-        exists.return_value = True
-
-        sysh = lib_sysconfig.SysConfigHelper()
-        sysh.remove_grub_configuration()
-
-        os_remove.assert_called_with(lib_sysconfig.GRUB_CONF)
-
-    @mock.patch("lib_sysconfig.hookenv.config")
-    @mock.patch("lib_sysconfig.os.remove")
-    @mock.patch("lib_sysconfig.hookenv.log")
-    @mock.patch("lib_sysconfig.os.path.exists")
     def test_remove_grub_configuration_true(self, exists, log, os_remove, config):
+        """Test remove grub configuration assuming file exists.
+
+        Expect os.remove is called
+        """
         config.return_value = {
             "update-grub": False
         }
@@ -304,6 +347,10 @@ class TestLib():
     @mock.patch("lib_sysconfig.hookenv.log")
     @mock.patch("lib_sysconfig.os.path.exists")
     def test_remove_grub_configuration_false(self, exists, log, os_remove, config):
+        """Test remove grub configuration assuming file not exists.
+
+        Expect os.remove is not called
+        """
         config.return_value = {
             "update-grub": False
         }
@@ -318,6 +365,10 @@ class TestLib():
     @mock.patch("lib_sysconfig.hookenv.log")
     @mock.patch("lib_sysconfig.render")
     def test_remove_systemd_configuration(self, render, log, config):
+        """Test remove systemd configuration.
+
+        Expect file is rendered with empty context.
+        """
         sysh = lib_sysconfig.SysConfigHelper()
         sysh.remove_systemd_configuration()
 
@@ -335,6 +386,10 @@ class TestLib():
     @mock.patch("lib_sysconfig.host.get_distrib_codename")
     @mock.patch("lib_sysconfig.hookenv.log")
     def test_remove_cpufreq_configuration_xenial(self, log, distrib_codename, check_call, restart, render, config):
+        """Test remove cpufrequtlis configuration.
+
+        Expect config is rendered with empty context.
+        """
         distrib_codename.return_value = "xenial"
         sysh = lib_sysconfig.SysConfigHelper()
         sysh.remove_cpufreq_configuration()
@@ -350,6 +405,10 @@ class TestLib():
 
     @mock.patch("lib_sysconfig.hookenv.config")
     def test_wrong_reservation(self, config):
+        """Test wrong reservation value.
+
+        Expect that is_config_valid() return false
+        """
         config.return_value = {
             "reservation": "wrong",
             "raid-autodetection": "",
@@ -360,6 +419,10 @@ class TestLib():
 
     @mock.patch("lib_sysconfig.hookenv.config")
     def test_wrong_raid(self, config):
+        """Test wrong raid autodetection value.
+
+        Expect that is_config_valid() return false
+        """
         config.return_value = {
             "reservation": "off",
             "raid-autodetection": "wrong",
@@ -370,6 +433,10 @@ class TestLib():
 
     @mock.patch("lib_sysconfig.hookenv.config")
     def test_wrong_governor(self, config):
+        """Test wrong governor value.
+
+        Expect that is_config_valid() return false
+        """
         config.return_value = {
             "reservation": "off",
             "raid-autodetection": "",
@@ -380,6 +447,7 @@ class TestLib():
 
     @mock.patch("lib_sysconfig.hookenv.config")
     def test_enable_container(self, config):
+        """Test enable container."""
         config.return_value = {
             "enable-container": True
         }

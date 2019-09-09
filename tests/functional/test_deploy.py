@@ -1,7 +1,11 @@
+"""Functional tests for sysconfig charm."""
+
 import asyncio
 import os
-import pytest
 import subprocess
+
+import pytest
+
 
 # Treat all tests as coroutines
 pytestmark = pytest.mark.asyncio
@@ -29,16 +33,19 @@ PRINCIPAL_APP_NAME = 'ubuntu-{}'
 # Custom fixtures
 @pytest.fixture(params=series)
 def series(request):
+    """Return ubuntu version (i.e. xenial) in use in the test."""
     return request.param
 
 
 @pytest.fixture(params=sources, ids=[s[0] for s in sources])
 def source(request):
+    """Return source of the charm under test (i.e. local, cs)."""
     return request.param
 
 
 @pytest.fixture
 async def app(model, series, source):
+    """Return application of the charm under test."""
     app_name = 'sysconfig-{}-{}'.format(series, source[0])
     return await model._wait_for_new('application', app_name)
 
@@ -46,7 +53,7 @@ async def app(model, series, source):
 # Tests
 
 async def test_sysconfig_deploy(model, series, source, request):
-    """Deploys the sysconfig charm as a subordinate of ubuntu"""
+    """Deploys the sysconfig charm as a subordinate of ubuntu."""
     channel = 'stable'
     sysconfig_app_name = 'sysconfig-{}-{}'.format(series, source[0])
     principal_app_name = PRINCIPAL_APP_NAME.format(series)
@@ -91,10 +98,12 @@ async def test_sysconfig_deploy(model, series, source, request):
 
 
 async def test_cannot_run_in_container(app):
+    """Test that default config doesn't allow to install in container."""
     assert app.status == 'blocked'
 
 
 async def test_forced_deploy(app, model):
+    """Force to install in container for testing purpose."""
     await app.set_config({'enable-container': 'true'})
     await model.block_until(
         lambda: app.status == 'active',
@@ -104,22 +113,15 @@ async def test_forced_deploy(app, model):
 
 
 async def test_cpufrequtils_intalled(app, jujutools):
+    """Verify cpufrequtils pkg is installed."""
     unit = app.units[0]
     cmd = 'dpkg -l | grep cpufrequtils'
     results = await jujutools.run_command(cmd, unit)
     assert results['Code'] == '0'
 
 
-async def test_forced_deploy(app, model):
-    await app.set_config({'enable-container': 'true'})
-    await model.block_until(
-        lambda: app.status == 'active',
-        timeout=TIMEOUT
-    )
-    assert app.status == 'active'
-
-
 async def test_default_config(app, jujutools):
+    """Test default configuration for grub, systemd and cpufrequtils."""
     unit = app.units[0]
 
     grup_path = '/etc/default/grub.d/90-sysconfig.cfg'
@@ -146,6 +148,7 @@ async def test_default_config(app, jujutools):
 
 
 async def test_config_changed(app, model, jujutools):
+    """Test configuration changed for grub, systemd, cpufrqutils and kernel."""
     kernel_version = '4.15.0-38-generic'
     linux_pkg = 'linux-image-{}'.format(kernel_version)
     linux_modules_extra_pkg = 'linux-modules-extra-{}'.format(kernel_version)
@@ -225,14 +228,18 @@ async def test_config_changed(app, model, jujutools):
 
 
 async def test_clear_notification(app):
-     unit = app.units[0]
-
-     action = await unit.run_action('clear-notification')
-     action = await action.wait()
-     assert action.status == 'completed'
+    """Tests that clear-notification action complete."""
+    unit = app.units[0]
+    action = await unit.run_action('clear-notification')
+    action = await action.wait()
+    assert action.status == 'completed'
 
 
 async def test_wrong_reservation(app, model):
+    """Tests wrong reservation value is used.
+
+    Expect application is blocked until correct value is set.
+    """
     await app.set_config(
         {
             'reservation': 'changeme'
@@ -258,6 +265,10 @@ async def test_wrong_reservation(app, model):
 
 
 async def test_wrong_raid_autodetection(app, model):
+    """Tests wrong raid-autodetection value is used.
+
+    Expect application is blocked until correct value is set.
+    """
     await app.set_config(
         {
             'raid-autodetection': 'changeme'
@@ -283,6 +294,10 @@ async def test_wrong_raid_autodetection(app, model):
 
 
 async def test_wrong_governor(app, model):
+    """Tests wrong governor value is used.
+
+    Expect application is blocked until correct value is set.
+    """
     await app.set_config(
         {
             'governor': 'changeme'
@@ -308,6 +323,7 @@ async def test_wrong_governor(app, model):
 
 
 async def test_uninstall(app, model, jujutools, series):
+    """Tests unistall the unit removing the subordinate relation."""
     # Apply systemd and cpufrequtils configuration to test that is deleted
     # after removing the relation with ubuntu
     await app.set_config(

@@ -14,19 +14,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from lib_sysconfig import CPUFREQUTILS, GRUB_CONF, SYSTEMD_SYSTEM, KERNEL, SysConfigHelper
+"""Reactive hooks for sysconfig charm."""
+
+from charmhelpers.core import hookenv, host
 
 from charms.reactive import (
+    clear_flag,
     helpers,
     hook,
+    is_flag_set,
     set_flag,
     when,
     when_none,
     when_not,
-    is_flag_set,
-    clear_flag,
 )
-from charmhelpers.core import host, hookenv
+
+from lib_sysconfig import CPUFREQUTILS, GRUB_CONF, KERNEL, SYSTEMD_SYSTEM, SysConfigHelper
 
 
 helper = SysConfigHelper()
@@ -35,6 +38,10 @@ helper = SysConfigHelper()
 @when_none('sysconfig.installed', 'sysconfig.unsupported')
 @when('juju-info.connected')
 def install_sysconfig():
+    """Install the charm if it is not running on a container.
+
+    Deploy can be forced using enable-container option only for testing. (Default: false).
+    """
     syshelper = SysConfigHelper()
 
     # container not supported unless enable-container=true for testing purpose
@@ -59,6 +66,7 @@ def install_sysconfig():
 @when_not('sysconfig.unsupported')
 @when('config.changed')
 def config_changed():
+    """Apply configuration updates if the charm is installed."""
     syshelper = SysConfigHelper()
     hookenv.status_set('maintenance', 'applying changes')
 
@@ -100,6 +108,11 @@ def config_changed():
 @hook('update-status')
 @when_not('sysconfig.unsupported')
 def update_status():
+    """Update the workload message checking if reboot is needed.
+
+    Note: After the reboot use clear-notification action to clear the
+    'reboot required' message.
+    """
     resources = [KERNEL, SYSTEMD_SYSTEM, GRUB_CONF]
     boot_changes = SysConfigHelper.boot_resources.resources_changed_since_boot(resources)
 
@@ -112,6 +125,7 @@ def update_status():
 @when('config.changed.enable-container')
 @when_not('sysconfig.installed')
 def enable_container_changed():
+    """Trigger installation if enable-container option changed."""
     if not is_flag_set('sysconfig.installed'):
         # Note: useful for testing purpose
         clear_flag('sysconfig.unsupported')
@@ -123,6 +137,10 @@ def enable_container_changed():
 @when('sysconfig.installed')
 @when_not('juju-info.available')
 def remove_configuration():
+    """Remove configuration applied by the charm if the juju-info relation is departed.
+
+    For safety, kernels installed by the charm won't be removed.
+    """
     hookenv.status_set('maintenance', 'removing sysconfig configurations')
     syshelper = SysConfigHelper()
     syshelper.remove_cpufreq_configuration()
