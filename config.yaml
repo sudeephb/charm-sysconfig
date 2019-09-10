@@ -80,7 +80,7 @@ options:
     default: ""
     description: |
         Upgrade kernel and modules-extra package to this version and add GRUB_DEFAULT to
-        /etc/default/grub to loaded the required kernel version. Does
+        /etc/default/grub to load the required kernel version. Does
         nothing if same kernel already running.
   update-grub:
     type: boolean
