@@ -7,6 +7,7 @@ import os
 import subprocess
 from datetime import datetime, timedelta, timezone
 
+from charmhelpers.contrib.openstack.utils import config_flags_parser
 from charmhelpers.core import hookenv, host, unitdata
 from charmhelpers.core.templating import render
 from charmhelpers.fetch import apt_install, apt_update
@@ -28,12 +29,12 @@ def parse_config_flags(config_flags):
     :param config_flags: key pairs list. Format: key1=value1,key2=value2
     :return dict: format {'key1': 'value1', 'key2': 'value2'}
     """
-    config_flags = config_flags.replace(" ", "")
     key_value_pairs = config_flags.split(",")
     parsed_config_flags = {}
     for pair in key_value_pairs:
-        if '=' in pair and len(pair.split('=', 1)) == 2:
-            parsed_config_flags[pair.split("=")[0]] = pair.split("=")[1]
+        if '=' in pair:
+            key, value = map(str.strip, pair.split('=', 1))
+            parsed_config_flags[key] = value
     return parsed_config_flags
 
 
@@ -164,6 +165,18 @@ class SysConfigHelper:
         """Return grub-config-flags config option."""
         return self.charm_config['governor']
 
+    @property
+    def config_flags(self):
+        """Return parsed config-flags into dict.
+
+        [DEPRECATED]: this option should no longer be used.
+        Instead grub-config-flags and systemd-config-flags should be used.
+        """
+        if not self.charm_config.get('config-flags'):
+            return {}
+        flags = config_flags_parser(self.charm_config['config-flags'])
+        return flags
+
     def _render_boot_resource(self, source, target, context):
         """Render the template and set the resource as changed."""
         render(source=source, templates_dir='templates', target=target, context=context)
@@ -221,7 +234,12 @@ class SysConfigHelper:
         if self.enable_iommu:
             context['iommu'] = True
 
-        context['grub_config_flags'] = self.grub_config_flags
+        # Note(peppepetra): First check if new grub-config-flags is used
+        # if not try to fallback into legacy config-flags
+        if self.grub_config_flags:
+            context['grub_config_flags'] = self.grub_config_flags
+        else:
+            context['grub_config_flags'] = parse_config_flags(self.config_flags.get('grub', ''))
 
         if self.kernel_version and not self._is_kernel_already_running():
             context['grub_default'] = GRUB_DEFAULT.format(self.kernel_version)
@@ -235,7 +253,13 @@ class SysConfigHelper:
         context = {}
         if self.reservation == 'affinity':
             context['cpu_range'] = self.cpu_range
-        context['systemd_config_flags'] = self.systemd_config_flags
+
+        # Note(peppepetra): First check if new systemd-config-flags is used
+        # if not try to fallback into legacy config-flags
+        if self.systemd_config_flags:
+            context['systemd_config_flags'] = self.systemd_config_flags
+        else:
+            context['systemd_config_flags'] = parse_config_flags(self.config_flags.get('systemd', ''))
 
         self._render_boot_resource(SYSTEMD_SYSTEM_TMPL, SYSTEMD_SYSTEM, context)
         hookenv.log('systemd configuration updated')

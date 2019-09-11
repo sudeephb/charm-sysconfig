@@ -14,9 +14,9 @@ juju_repository = os.getenv('CHARM_BUILD_DIR', '.').rstrip('/')
 
 series = ['xenial', 'bionic']
 
-sources = [('local', '{}/builds/sysconfig'.format(juju_repository))]
+sources = [('local', '{}/sysconfig'.format(juju_repository))]
 
-TIMEOUT = 1000
+TIMEOUT = 600
 GRUB_DEFAULT = 'Advanced options for Ubuntu>Ubuntu, with Linux {}'
 PRINCIPAL_APP_NAME = 'ubuntu-{}'
 
@@ -164,6 +164,7 @@ async def test_config_changed(app, model, jujutools):
             'enable-iommu': 'false',
             'kernel-version': kernel_version,
             'grub-config-flags': 'GRUB_TIMEOUT=10',
+            'config-flags': '{"grub": "TEST=test"}',  # config-flags are ignored when grub-config-flags are used
             'systemd-config-flags': 'DefaultLimitRTTIME=1,DefaultTasksMax=10',
             'governor': 'powersave'
         }
@@ -186,6 +187,7 @@ async def test_config_changed(app, model, jujutools):
     assert 'intel_iommu=on iommu=pt' not in grub_content
     assert 'GRUB_DEFAULT="{}"'.format(GRUB_DEFAULT.format(kernel_version)) in grub_content
     assert 'GRUB_TIMEOUT=10' in grub_content
+    assert 'TEST=test' not in grub_content
 
     # Reconfiguring reservation from isolcpus to affinity
     # isolcpus will be removed from grub and affinity added to systemd

@@ -1,3 +1,4 @@
+netifaces
 charmhelpers
 charms.reactive
 mock

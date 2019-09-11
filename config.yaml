@@ -68,6 +68,18 @@ options:
         If true and VT-d enabled in the BIOS, it will allow to use direct I/O
         bypassing DMA translation with pci-passthrough devices.
         Enable it to use SR-IOV
+  config-flags:
+    default: ""
+    type: string
+    description: |
+      If extra lines need to be configured on /etc/default/grub
+      (isolcpus) or /etc/systemd/system.conf (affinity), this string
+      can be used as a list in yaml format.
+      Sample:
+        {'grub': 'key1=value1, key2=value2', 'systemd': 'key1=value1'}
+
+      [DEPRECATED]: this option should no longer be used.
+      Instead grub-config-flags and systemd-config-flags should be used.
   grub-config-flags:
     default: ""
     type: string

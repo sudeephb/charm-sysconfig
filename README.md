@@ -76,6 +76,15 @@ to the files `/etc/default/grub`
 If you need further options configured, this extra options will be added
 to the files `/etc/systemd/system.conf`
 
+## config-flags
+
+DEPRECATED in favor of grub-config-flags or systemd-config-flags
+
+If you need further options configured, these extra options will be added
+to the files:
+ * `/etc/default/grub` (reservation=isolcpus)
+ * `/etc/systemd/system.conf` (reservation=affinity)
+
 ## Kernel Version
 
 Upgrade kernel and modules-extra package to this version and add `GRUB_DEFAULT` to
