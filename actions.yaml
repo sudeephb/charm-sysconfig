@@ -3,4 +3,4 @@ clear-notification:
     This unit can modify runtime configurations on the Operating System which require a manual intervention
     by an operator. The unit will keep a message informing about it until this action is run.
     .
-    By doing so, unit will change the description to 
+    By doing so, unit will change the description to 'ready'
