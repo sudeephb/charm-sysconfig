@@ -33,11 +33,11 @@ functional: build
 build:
 	@echo "Building charm to base directory $(JUJU_REPOSITORY)"
 	@-git describe --tags > ./repo-info
-	@LAYER_PATH=./layers INTERFACE_PATH=./interfaces TERM=linux \
-		JUJU_REPOSITORY=$(JUJU_REPOSITORY) charm build . --force
+	@CHARM_LAYERS_PATH=./layers CHARM_INTERFACES_PATH=./interfaces TERM=linux \
+		CHARM_BUILD_DIR=$(CHARM_BUILD_DIR) charm build . --force
 
 release: clean build
-	@echo "Charm is built at $(JUJU_REPOSITORY)/builds"
+	@echo "Charm is built at $(CHARM_BUILD_DIR)/builds"
 
 clean:
 	@echo "Cleaning files"

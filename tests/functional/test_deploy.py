@@ -10,13 +10,13 @@ import pytest
 # Treat all tests as coroutines
 pytestmark = pytest.mark.asyncio
 
-juju_repository = os.getenv('JUJU_REPOSITORY', '.').rstrip('/')
+juju_repository = os.getenv('CHARM_BUILD_DIR', '.').rstrip('/')
 
 series = ['xenial', 'bionic']
 
 sources = [('local', '{}/builds/sysconfig'.format(juju_repository))]
 
-TIMEOUT = 600
+TIMEOUT = 1000
 GRUB_DEFAULT = 'Advanced options for Ubuntu>Ubuntu, with Linux {}'
 PRINCIPAL_APP_NAME = 'ubuntu-{}'
 
