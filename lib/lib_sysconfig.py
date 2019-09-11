@@ -186,7 +186,7 @@ class SysConfigHelper:
         """Check if the kernel version required by charm config is equal to kernel running."""
         configured = self.kernel_version
         if configured == running_kernel():
-            hookenv.log("Already running kernel: {}".format(configured),  hookenv.DEBUG)
+            hookenv.log("Already running kernel: {}".format(configured), hookenv.DEBUG)
             return True
         return False
 
@@ -194,23 +194,23 @@ class SysConfigHelper:
         """Call update-grub when update-grub config param is set to True."""
         if self.update_grub and not host.is_container():
             subprocess.check_call(['/usr/sbin/update-grub'])
-            hookenv.log('Running update-grub to apply grub conf updates',  hookenv.DEBUG)
+            hookenv.log('Running update-grub to apply grub conf updates', hookenv.DEBUG)
 
     def is_config_valid(self):
         """Validate config parameters."""
         valid = True
 
         if self.reservation not in ['off', 'isolcpus', 'affinity']:
-            hookenv.log('reservation not valid. Possible values: ["off", "isolcpus", "affinity"]',  hookenv.DEBUG)
+            hookenv.log('reservation not valid. Possible values: ["off", "isolcpus", "affinity"]', hookenv.DEBUG)
             valid = False
 
         if self.raid_autodetection not in ['', 'noautodetect', 'partitionable']:
             hookenv.log('raid-autodetection not valid. '
-                        'Possible values: ["off", "noautodetect", "partitionable"]',  hookenv.DEBUG)
+                        'Possible values: ["off", "noautodetect", "partitionable"]', hookenv.DEBUG)
             valid = False
 
         if self.governor not in ['', 'powersave', 'performance']:
-            hookenv.log('governor not valid. Possible values: ["", "powersave", "performance"]',  hookenv.DEBUG)
+            hookenv.log('governor not valid. Possible values: ["", "powersave", "performance"]', hookenv.DEBUG)
             valid = False
 
         return valid
@@ -270,7 +270,7 @@ class SysConfigHelper:
         Will install kernel and matching modules-extra package
         """
         if not self.kernel_version or self._is_kernel_already_running():
-            hookenv.log('kernel running already to the reuired version',  hookenv.DEBUG)
+            hookenv.log('kernel running already to the reuired version', hookenv.DEBUG)
             return
 
         configured = self.kernel_version
@@ -290,15 +290,17 @@ class SysConfigHelper:
         # Ondemand init script is not updated during test if host is container.
         if host.get_distrib_codename() == 'xenial' and not host.is_container():
             hookenv.log('disabling the ondemand initscript for lp#1822774'
-                        ' and lp#740127 if a governor is specified',  hookenv.DEBUG)
+                        ' and lp#740127 if a governor is specified', hookenv.DEBUG)
             if self.governor:
                 subprocess.check_call(
-                        ['/usr/sbin/update-rc.d', '-f', 'ondemand', 'remove', '>', '/dev/null', '2>&1']
+                    ['/usr/sbin/update-rc.d', '-f', 'ondemand', 'remove'],
+                    stdout=subprocess.DEVNULL
                 )
             else:
                 # Renable ondemand when governor is unset.
                 subprocess.check_call(
-                    ['/usr/sbin/update-rc.d', '-f', 'ondemand', 'defaults', '>', '/dev/null', '2>&1']
+                    ['/usr/sbin/update-rc.d', '-f', 'ondemand', 'defaults'],
+                    stdout=subprocess.DEVNULL
                 )
 
         host.service_restart('cpufrequtils')
@@ -341,7 +343,8 @@ class SysConfigHelper:
             hookenv.log('Enabling the ondemand initscript for lp#1822774'
                         ' and lp#740127', 'DEBUG')
             subprocess.check_call(
-                    ['/usr/sbin/update-rc.d', '-f', 'ondemand', 'defaults', '>', '/dev/null', '2>&1']
+                ['/usr/sbin/update-rc.d', '-f', 'ondemand', 'defaults'],
+                stdout=subprocess.DEVNULL
             )
 
         self._render_boot_resource(CPUFREQUTILS_TMPL, CPUFREQUTILS, context)
