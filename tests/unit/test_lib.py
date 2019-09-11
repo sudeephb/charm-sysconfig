@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 """Unit tests for SysConfigHelper and BootResourceState classes."""
 
+
+import subprocess
 from datetime import datetime, timezone
 
 import lib_sysconfig
@@ -98,7 +100,10 @@ class TestLib:
             templates_dir="templates",
             context=expected,
         )
-        check_call.assert_called_with(['/usr/sbin/update-rc.d', '-f', 'ondemand', 'remove', '>', '/dev/null', '2>&1'])
+        check_call.assert_called_with(
+            ['/usr/sbin/update-rc.d', '-f', 'ondemand', 'remove'],
+            stdout=subprocess.DEVNULL
+        )
 
     @mock.patch("lib_sysconfig.subprocess.check_call")
     @mock.patch("lib_sysconfig.host.get_distrib_codename")
@@ -123,7 +128,10 @@ class TestLib:
             context=expected,
         )
         restart.assert_called()
-        check_call.assert_called_with(['/usr/sbin/update-rc.d', '-f', 'ondemand', 'defaults', '>', '/dev/null', '2>&1'])
+        check_call.assert_called_with(
+            ['/usr/sbin/update-rc.d', '-f', 'ondemand', 'defaults'],
+            stdout=subprocess.DEVNULL
+        )
 
     @mock.patch("lib_sysconfig.subprocess.check_call")
     @mock.patch("lib_sysconfig.host.get_distrib_codename")

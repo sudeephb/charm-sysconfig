@@ -16,7 +16,7 @@
 
 name: sysconfig
 summary: System related configurations
-maintainer: Giuseppe Petralia <giuseppe.petralia@canonical.com>
+maintainer: Bootstack <bootstack-support@lists.canonical.com>
 description: |
   SYSConfig can configure cpufreq governor (ie powersave, performance),
   and CPU Affinity or Kernel's isolcpus details in systemd-sytem.conf

@@ -83,23 +83,25 @@ def config_changed():
         syshelper.update_cpufreq()
 
     # GRUB
-    if syshelper.charm_config.changed('reservation') or \
-            syshelper.charm_config.changed('hugepages') or \
-            syshelper.charm_config.changed('hugepagesz') or \
-            syshelper.charm_config.changed('raid-autodetection') or \
-            syshelper.charm_config.changed('enable-pti') or \
-            syshelper.charm_config.changed('enable-iommu') or \
-            syshelper.charm_config.changed('grub-config-flags') or \
-            syshelper.charm_config.changed('kernel-version') or \
-            syshelper.charm_config.changed('update-grub') or \
-            helpers.any_file_changed([GRUB_CONF]):
-
+    if any(syshelper.charm_config.changed(flag) for flag in (
+            'reservation',
+            'hugepages',
+            'hugepagesz',
+            'raid-autodetection',
+            'enable-pti',
+            'enable-iommu',
+            'grub-config-flags',
+            'kernel-version',
+            'update-grub',
+            'config-flags',
+    )) or helpers.any_file_changed([GRUB_CONF]):
         syshelper.update_grub_file()
 
     # systemd
-    if syshelper.charm_config.changed('reservation') or \
-            syshelper.charm_config.changed('systemd-config-flags') or \
-            helpers.any_file_changed([SYSTEMD_SYSTEM]):
+    if any(syshelper.charm_config.changed(flag) for flag in (
+            'reservation',
+            'systemd-config-flags',
+    )) or helpers.any_file_changed([SYSTEMD_SYSTEM]):
         syshelper.update_systemd_system_file()
 
     update_status()
@@ -126,12 +128,7 @@ def update_status():
 @when_not('sysconfig.installed')
 def enable_container_changed():
     """Trigger installation if enable-container option changed."""
-    if not is_flag_set('sysconfig.installed'):
-        # Note: useful for testing purpose
-        clear_flag('sysconfig.unsupported')
-        return
-
-    hookenv.status_set('maintenance', 'installation in progress')
+    clear_flag('sysconfig.unsupported')
 
 
 @when('sysconfig.installed')
