@@ -15,26 +15,26 @@ help:
 	@echo " make lint - run flake8"
 	@echo " make test - run the functional tests, unittests and lint"
 	@echo " make unittest - run the tests defined in the unittest subdirectory"
+	@echo " make functional - run the tests defined in the functional subdirectory"
 	@echo " make release - build the charm"
 	@echo " make clean - remove unneeded files"
 	@echo ""
 
 submodules:
 	@echo "Cloning submodules"
-	@git submodule update --init --recursiv
+	@git submodule update --init --recursive
 
 lint:
 	@echo "Running flake8"
 	@cd src && tox -e lint
 
-test: lint unittest lint functional
+test: lint unittest functional
 
 functional: build
 	@cd src && PYTEST_KEEP_MODEL=$(PYTEST_KEEP_MODEL) \
 	    PYTEST_CLOUD_NAME=$(PYTEST_CLOUD_NAME) \
 	    PYTEST_CLOUD_REGION=$(PYTEST_CLOUD_REGION) \
 	    tox -e functional
-
 
 unittest:
 	@cd src && tox -e unit
@@ -50,9 +50,10 @@ release: clean build
 
 clean:
 	@echo "Cleaning files"
+	@find $(PROJECTPATH)/src -iname __pycache__ -exec rm -r {} +
 	@if [ -d $(CHARM_BUILD_DIR)/builds ] ; then rm -r $(CHARM_BUILD_DIR)/builds ; fi
 	@if [ -d $(PROJECTPATH)/src/.tox ] ; then rm -r $(PROJECTPATH)/src/.tox ; fi
 	@if [ -d $(PROJECTPATH)/src/.pytest_cache ] ; then rm -r $(PROJECTPATH)/src/.pytest_cache ; fi
 
 # The targets below don't depend on a file
-.PHONY: lint test unittest build release clean help
+.PHONY: lint test unittest  build release clean help submodules
