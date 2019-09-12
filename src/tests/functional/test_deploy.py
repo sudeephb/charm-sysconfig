@@ -10,11 +10,14 @@ import pytest
 # Treat all tests as coroutines
 pytestmark = pytest.mark.asyncio
 
-juju_repository = os.getenv('CHARM_BUILD_DIR', '.').rstrip('/')
+charm_build_dir = os.getenv('CHARM_BUILD_DIR', '..').rstrip('/')
 
-series = ['xenial', 'bionic']
+series = ['xenial',
+          'bionic',
+          pytest.param('cosmic', marks=pytest.mark.xfail(reason='canary')),
+          ]
 
-sources = [('local', '{}/sysconfig'.format(juju_repository))]
+sources = [('local', '{}/builds/sysconfig'.format(charm_build_dir))]
 
 TIMEOUT = 600
 GRUB_DEFAULT = 'Advanced options for Ubuntu>Ubuntu, with Linux {}'

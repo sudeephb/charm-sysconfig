@@ -23,6 +23,10 @@ repo-info
 
 # reports
 report/*
+src/report/*
 
 # virtual env
 venv/*
+
+# builds
+builds/*
