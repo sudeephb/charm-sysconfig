@@ -22,7 +22,6 @@ from charms.reactive import (
     clear_flag,
     helpers,
     hook,
-    is_flag_set,
     set_flag,
     when,
     when_none,

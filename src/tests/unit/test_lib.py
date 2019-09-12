@@ -234,43 +234,6 @@ class TestLib:
     @mock.patch("lib_sysconfig.hookenv.config")
     @mock.patch("lib_sysconfig.hookenv.log")
     @mock.patch("lib_sysconfig.render")
-    def test_legacy_grub_config_flags(self, render, log, config, check_call):
-        """Update /etc/default/grub.d/90-sysconfig.cfg using legacy config-flags.
-
-        Expect file is rendered with correct config.
-        """
-        config.return_value = {
-            "reservation": "",
-            "hugepages": "",
-            "hugepagesz": "",
-            "raid-autodetection": "",
-            "enable-pti": True,
-            "enable-iommu": False,
-            "config-flags": "{ 'grub': 'GRUB_TIMEOUT=0, TEST=line with space'}",
-            "grub-config-flags": "",
-            "kernel-version": "",
-            "update-grub": True,
-        }
-
-        expected = {
-            "grub_config_flags": {"GRUB_TIMEOUT": "0", "TEST": "line with space"},
-        }
-
-        sysh = lib_sysconfig.SysConfigHelper()
-        sysh.update_grub_file()
-        render.assert_called_with(
-            source=lib_sysconfig.GRUB_CONF_TMPL,
-            target=lib_sysconfig.GRUB_CONF,
-            templates_dir="templates",
-            context=expected,
-        )
-        check_call.assert_called()
-
-
-    @mock.patch("lib_sysconfig.subprocess.check_call")
-    @mock.patch("lib_sysconfig.hookenv.config")
-    @mock.patch("lib_sysconfig.hookenv.log")
-    @mock.patch("lib_sysconfig.render")
     def test_update_grub_file_no_update_grub(self, render, log, config, check_call):
         """Update /etc/default/grub.d/90-sysconfig.cfg and update-grub false.
 
