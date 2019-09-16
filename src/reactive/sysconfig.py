@@ -31,9 +31,6 @@ from charms.reactive import (
 from lib_sysconfig import CPUFREQUTILS, GRUB_CONF, KERNEL, SYSTEMD_SYSTEM, SysConfigHelper
 
 
-helper = SysConfigHelper()
-
-
 @when_none('sysconfig.installed', 'sysconfig.unsupported')
 @when('juju-info.connected')
 def install_sysconfig():
@@ -93,6 +90,7 @@ def config_changed():
             'kernel-version',
             'update-grub',
             'config-flags',
+            'cpu-range',
     )) or helpers.any_file_changed([GRUB_CONF]):
         syshelper.update_grub_file()
 
@@ -100,6 +98,8 @@ def config_changed():
     if any(syshelper.charm_config.changed(flag) for flag in (
             'reservation',
             'systemd-config-flags',
+            'cpu-range',
+            'config-flags',
     )) or helpers.any_file_changed([SYSTEMD_SYSTEM]):
         syshelper.update_systemd_system_file()
 

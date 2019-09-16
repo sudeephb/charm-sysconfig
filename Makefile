@@ -56,4 +56,4 @@ clean:
 	@if [ -d $(PROJECTPATH)/src/.pytest_cache ] ; then rm -r $(PROJECTPATH)/src/.pytest_cache ; fi
 
 # The targets below don't depend on a file
-.PHONY: lint test unittest  build release clean help submodules
+.PHONY: lint test unittest functional build release clean help submodules

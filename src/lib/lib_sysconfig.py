@@ -292,15 +292,15 @@ class SysConfigHelper:
             hookenv.log('disabling the ondemand initscript for lp#1822774'
                         ' and lp#740127 if a governor is specified', hookenv.DEBUG)
             if self.governor:
-                subprocess.check_call(
+                subprocess.call(
                     ['/usr/sbin/update-rc.d', '-f', 'ondemand', 'remove'],
-                    stdout=subprocess.DEVNULL
+                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
                 )
             else:
                 # Renable ondemand when governor is unset.
-                subprocess.check_call(
+                subprocess.call(
                     ['/usr/sbin/update-rc.d', '-f', 'ondemand', 'defaults'],
-                    stdout=subprocess.DEVNULL
+                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
                 )
 
         host.service_restart('cpufrequtils')
@@ -342,9 +342,9 @@ class SysConfigHelper:
         if host.get_distrib_codename() == 'xenial' and not host.is_container():
             hookenv.log('Enabling the ondemand initscript for lp#1822774'
                         ' and lp#740127', 'DEBUG')
-            subprocess.check_call(
+            subprocess.call(
                 ['/usr/sbin/update-rc.d', '-f', 'ondemand', 'defaults'],
-                stdout=subprocess.DEVNULL
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
             )
 
         self._render_boot_resource(CPUFREQUTILS_TMPL, CPUFREQUTILS, context)
