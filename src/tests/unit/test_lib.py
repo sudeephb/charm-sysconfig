@@ -78,7 +78,7 @@ class TestLib:
         """See if the helper fixture works to load charm configs."""
         assert isinstance(sysconfig.charm_config, dict)
 
-    @mock.patch("lib_sysconfig.subprocess.check_call")
+    @mock.patch("lib_sysconfig.subprocess.call")
     @mock.patch("lib_sysconfig.host.get_distrib_codename")
     @mock.patch("lib_sysconfig.hookenv.config")
     @mock.patch("lib_sysconfig.host.service_restart")
@@ -102,10 +102,10 @@ class TestLib:
         )
         check_call.assert_called_with(
             ['/usr/sbin/update-rc.d', '-f', 'ondemand', 'remove'],
-            stdout=subprocess.DEVNULL
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
         )
 
-    @mock.patch("lib_sysconfig.subprocess.check_call")
+    @mock.patch("lib_sysconfig.subprocess.call")
     @mock.patch("lib_sysconfig.host.get_distrib_codename")
     @mock.patch("lib_sysconfig.hookenv.config")
     @mock.patch("lib_sysconfig.host.service_restart")
@@ -130,10 +130,10 @@ class TestLib:
         restart.assert_called()
         check_call.assert_called_with(
             ['/usr/sbin/update-rc.d', '-f', 'ondemand', 'defaults'],
-            stdout=subprocess.DEVNULL
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
         )
 
-    @mock.patch("lib_sysconfig.subprocess.check_call")
+    @mock.patch("lib_sysconfig.subprocess.call")
     @mock.patch("lib_sysconfig.host.get_distrib_codename")
     @mock.patch("lib_sysconfig.hookenv.config")
     @mock.patch("lib_sysconfig.host.service_restart")
@@ -169,7 +169,7 @@ class TestLib:
             "raid-autodetection": "noautodetect",
             "enable-pti": True,
             "enable-iommu": True,
-            "grub-config-flags": "GRUB_TIMEOUT=0",
+            "grub-config-flags": "TEST_KEY=\"TEST VALUE, WITH COMMA\", GRUB_TIMEOUT=0",
             "kernel-version": "4.15.0-38-generic",
             "update-grub": True
         }
@@ -180,7 +180,7 @@ class TestLib:
             "hugepagesz": "1G",
             "raid": "noautodetect",
             "iommu": True,
-            "grub_config_flags": {"GRUB_TIMEOUT": "0"},
+            "grub_config_flags": {"GRUB_TIMEOUT": "0", "TEST_KEY": "\"TEST VALUE, WITH COMMA\""},
             "grub_default": "Advanced options for Ubuntu>Ubuntu, with Linux 4.15.0-38-generic"
         }
 
@@ -210,14 +210,14 @@ class TestLib:
             "raid-autodetection": "",
             "enable-pti": True,
             "enable-iommu": False,
-            "config-flags": "{ 'grub': 'GRUB_TIMEOUT=0, TEST=line with space'}",
+            "config-flags": "{ 'grub': 'GRUB_TIMEOUT=0, TEST=line with space, and comma'}",
             "grub-config-flags": "",
             "kernel-version": "",
             "update-grub": True,
         }
 
         expected = {
-            "grub_config_flags": {"GRUB_TIMEOUT": "0", "TEST": "line with space"},
+            "grub_config_flags": {"GRUB_TIMEOUT": "0", "TEST": "line with space, and comma"},
         }
 
         sysh = lib_sysconfig.SysConfigHelper()
@@ -247,7 +247,7 @@ class TestLib:
             "raid-autodetection": "noautodetect",
             "enable-pti": False,
             "enable-iommu": True,
-            "grub-config-flags": "GRUB_TIMEOUT=0",
+            "grub-config-flags": "GRUB_TIMEOUT=0, TEST=\"one,two,three, four\"",
             "kernel-version": "4.15.0-38-generic",
             "update-grub": False
         }
@@ -258,7 +258,7 @@ class TestLib:
             "hugepagesz": "1G",
             "raid": "noautodetect",
             "iommu": True,
-            "grub_config_flags": {"GRUB_TIMEOUT": "0"},
+            "grub_config_flags": {"GRUB_TIMEOUT": "0", "TEST": "\"one,two,three, four\""},
             "grub_default": "Advanced options for Ubuntu>Ubuntu, with Linux 4.15.0-38-generic",
             'pti_off': True
         }
@@ -458,7 +458,7 @@ class TestLib:
     @mock.patch("lib_sysconfig.hookenv.config")
     @mock.patch("lib_sysconfig.render")
     @mock.patch("lib_sysconfig.host.service_restart")
-    @mock.patch("lib_sysconfig.subprocess.check_call")
+    @mock.patch("lib_sysconfig.subprocess.call")
     @mock.patch("lib_sysconfig.host.get_distrib_codename")
     @mock.patch("lib_sysconfig.hookenv.log")
     def test_remove_cpufreq_configuration_xenial(self, log, distrib_codename, check_call, restart, render, config):

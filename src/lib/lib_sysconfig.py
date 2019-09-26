@@ -31,9 +31,17 @@ def parse_config_flags(config_flags):
     """
     key_value_pairs = config_flags.split(",")
     parsed_config_flags = {}
-    for pair in key_value_pairs:
+    for index, pair in enumerate(key_value_pairs):
         if '=' in pair:
             key, value = map(str.strip, pair.split('=', 1))
+            # Note(peppepetra): if value contains a comma that is also used as
+            # delimiter, we need to reconstruct the value
+            i = index + 1
+            while i < len(key_value_pairs):
+                if '=' in key_value_pairs[i]:
+                    break
+                value += ',' + key_value_pairs[i]
+                i += 1
             parsed_config_flags[key] = value
     return parsed_config_flags
 
