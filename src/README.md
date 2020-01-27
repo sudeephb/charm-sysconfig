@@ -1,6 +1,14 @@
 # Overview
 
-This is a subordinate charm to apply grub, systemd, kernel and cpufrequtils configuration.
+This is a subordinate charm to apply grub, systemd, kernel and cpufrequtils configuration. 
+
+Note that the charm will override kernel parameters that were
+previously configured. To add or keep kernel parameters you had
+previously configured see the grub-config-flags option below.
+
+Similarly, the charm will also override existing system-systemd
+configuration. To add to the systemd configuration see the
+systemd-config-flags option. 
 
 
 # Usage
@@ -71,10 +79,18 @@ bypassing DMA translation with pci-passthrough devices. Enable it to use SR-IOV
 If you need further options configured, this extra options will be added
 to the files `/etc/default/grub`
 
+For instance, if you need to set the kernel parameter
+"nvme_core.multipath=0" you would add:
+
+juju config sysconfig grub-config-flags='GRUB_CMDLINE_LINUX_DEFAULT="$GRUB_CMDLINE_LINUX_DEFAULT nvme_core.multipath=0"
+
 ## systemd-config-flags
 
 If you need further options configured, this extra options will be added
 to the files `/etc/systemd/system.conf`
+
+For instance, if you need to set the "CrashReboot" parameter you would use:
+juju config sysconfig systemd-config-flags="CrashReboot=yes"
 
 ## config-flags
 
