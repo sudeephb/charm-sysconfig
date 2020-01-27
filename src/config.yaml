@@ -86,7 +86,11 @@ options:
     description: |
         If extra lines need to be configured on /etc/default/grub
         this string can be used as a list of key/value pairs
-        'key1=value1,key2=value2'
+        'key1=value1,key2=value2'.  If you want to add additional parameters to
+        GRUB_CMDLINE_LINUX_DEFAULT, then you need to include the existing items
+        to avoid them being overwritten, for example
+        grub-config-flags='GRUB_CMDLINE_LINUX_DEFAULT="$GRUB_CMDLINE_LINUX_DEFAULT
+        nvme_core.multipath=0'
   kernel-version:
     type: string
     default: ""
