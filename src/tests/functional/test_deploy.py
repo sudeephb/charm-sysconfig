@@ -2,6 +2,7 @@
 
 import asyncio
 import os
+import re
 import subprocess
 
 import pytest
@@ -325,6 +326,25 @@ async def test_wrong_governor(app, model):
         lambda: app.status == 'active',
         timeout=TIMEOUT
     )
+
+
+@pytest.mark.parametrize('cache_setting', [
+    'yes',
+    'no',
+    'no-negative',
+])
+async def test_set_resolved_cache(app, model, jujutools, cache_setting):
+    """Tests resolved cache settings."""
+    await app.set_config({'resolved-cache-mode': cache_setting})
+    await model.block_until(
+        lambda: app.status == 'active',
+        timeout=TIMEOUT
+    )
+    unit = app.units[0]
+    resolved_conf_content = await jujutools.file_contents(
+        '/etc/systemd/resolved.conf', unit)
+    assert re.match('^Cache={}'.format(cache_setting), resolved_conf_content,
+                    re.MULTILINE)
 
 
 async def test_uninstall(app, model, jujutools, series):
