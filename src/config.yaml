@@ -127,4 +127,4 @@ options:
     default: "yes"
     description: |
         Sets the "Cache" configuration value in /etc/systemd/resolved.conf.  Valid
-        values are 'yes', 'no', and 'no-negative'.
+        values are '' (system default), 'yes', 'no', and 'no-negative'.
