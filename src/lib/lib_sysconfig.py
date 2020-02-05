@@ -215,22 +215,15 @@ class SysConfigHelper:
         """Validate config parameters."""
         valid = True
 
-        if self.reservation not in ['off', 'isolcpus', 'affinity']:
-            hookenv.log('reservation not valid. Possible values: ["off", "isolcpus", "affinity"]', hookenv.DEBUG)
-            valid = False
-
-        if self.raid_autodetection not in ['', 'noautodetect', 'partitionable']:
-            hookenv.log('raid-autodetection not valid. '
-                        'Possible values: ["off", "noautodetect", "partitionable"]', hookenv.DEBUG)
-            valid = False
-
-        if self.governor not in ['', 'powersave', 'performance']:
-            hookenv.log('governor not valid. Possible values: ["", "powersave", "performance"]', hookenv.DEBUG)
-            valid = False
-
-        if self.resolved_cache_mode not in ['', 'yes', 'no', 'no-negative']:
-            hookenv.log('resolved-cache-mode not valid. Possible values: ["", "yes", "no", "no-negative"]', hookenv.DEBUG)
-            valid = False
+        for config_key, value, valid_values in (
+                ('reservation', self.reservation, ['off', 'isolcpus', 'affinity']),
+                ('raid-autodetection', self.raid_autodetection, ['', 'noautodetect', 'partitionable']),
+                ('governor', self.governor, ['', 'powersave', 'performance']),
+                ('resolved-cache-mode', self.resolved_cache_mode, ['', 'yes', 'no', 'no-negative']),
+        ):
+            if value not in valid_values:
+                hookenv.log('{} not valid. Possible values: {}'.format(config_key, repr(valid_values)), hookenv.DEBUG)
+                valid = False
 
         return valid
 
