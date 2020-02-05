@@ -488,7 +488,8 @@ class TestLib:
         config.return_value = {
             "reservation": "wrong",
             "raid-autodetection": "",
-            "governor": ""
+            "governor": "",
+            "resolved-cache-mode": "",
         }
         sysh = lib_sysconfig.SysConfigHelper()
         assert not sysh.is_config_valid()
@@ -502,7 +503,8 @@ class TestLib:
         config.return_value = {
             "reservation": "off",
             "raid-autodetection": "wrong",
-            "governor": ""
+            "governor": "",
+            "resolved-cache-mode": "",
         }
         sysh = lib_sysconfig.SysConfigHelper()
         assert not sysh.is_config_valid()
@@ -516,7 +518,8 @@ class TestLib:
         config.return_value = {
             "reservation": "off",
             "raid-autodetection": "",
-            "governor": "wrong"
+            "governor": "wrong",
+            "resolved-cache-mode": "",
         }
         sysh = lib_sysconfig.SysConfigHelper()
         assert not sysh.is_config_valid()
