@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 import lib_sysconfig
 
 import mock
+import pytest
 
 
 class TestBootResourceState:
@@ -479,48 +480,22 @@ class TestLib:
         )
         restart.assert_called()
 
+    @pytest.mark.parametrize("invalid_config_key", [
+        "reservation", "raid-autodetection", "governor", "resolved-cache-mode"])
     @mock.patch("lib_sysconfig.hookenv.config")
-    def test_wrong_reservation(self, config):
-        """Test wrong reservation value.
+    def test_wrong_config(self, config, invalid_config_key):
+        """Test wrong configuration value.
 
         Expect that is_config_valid() return false
         """
-        config.return_value = {
-            "reservation": "wrong",
+        return_value = {
+            "reservation": "off",
             "raid-autodetection": "",
             "governor": "",
             "resolved-cache-mode": "",
+            invalid_config_key: 'wrong',  # Will override the selected key with an invalid value
         }
-        sysh = lib_sysconfig.SysConfigHelper()
-        assert not sysh.is_config_valid()
-
-    @mock.patch("lib_sysconfig.hookenv.config")
-    def test_wrong_raid(self, config):
-        """Test wrong raid autodetection value.
-
-        Expect that is_config_valid() return false
-        """
-        config.return_value = {
-            "reservation": "off",
-            "raid-autodetection": "wrong",
-            "governor": "",
-            "resolved-cache-mode": "",
-        }
-        sysh = lib_sysconfig.SysConfigHelper()
-        assert not sysh.is_config_valid()
-
-    @mock.patch("lib_sysconfig.hookenv.config")
-    def test_wrong_governor(self, config):
-        """Test wrong governor value.
-
-        Expect that is_config_valid() return false
-        """
-        config.return_value = {
-            "reservation": "off",
-            "raid-autodetection": "",
-            "governor": "wrong",
-            "resolved-cache-mode": "",
-        }
+        config.return_value = return_value
         sysh = lib_sysconfig.SysConfigHelper()
         assert not sysh.is_config_valid()
 
