@@ -197,7 +197,8 @@ class SysConfigHelper:
         self._render_resource(source, target, context)
         self.boot_resources.set_resource(target)
 
-    def _render_resource(self, source, target, context):
+    @staticmethod
+    def _render_resource(source, target, context):
         """Render the template."""
         render(source=source, templates_dir='templates', target=target, context=context)
 
@@ -395,6 +396,7 @@ class SysConfigHelper:
         )
         host.service_restart('cpufrequtils')
 
-    def get_checksum(self, filename):
+    @staticmethod
+    def get_checksum(filename):
         with open(filename, 'rb') as infile:
             return hashlib.sha256(infile.read()).hexdigest()

@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 """Unit tests for SysConfigHelper and BootResourceState classes."""
-
-
+import os
 import subprocess
+import tempfile
 from datetime import datetime, timezone
 
 import lib_sysconfig
@@ -508,3 +508,43 @@ class TestLib:
         sysh = lib_sysconfig.SysConfigHelper()
 
         assert sysh.enable_container
+
+    def test_get_checksum(self):
+        fd, filename = tempfile.mkstemp()
+        os.close(fd)
+        sums = []
+        for body in ('foo', 'bar', 'foo'):
+            with open(filename, 'w') as outfile:
+                outfile.write(body)
+            sums.append(lib_sysconfig.SysConfigHelper.get_checksum(filename))
+        assert sums[0] != sums[1]
+        assert sums[0] == sums[2]
+
+    @mock.patch("lib_sysconfig.SysConfigHelper.get_checksum")
+    @mock.patch("lib_sysconfig.hookenv.config")
+    @mock.patch("lib_sysconfig.host.service_restart")
+    @mock.patch("lib_sysconfig.render")
+    def test_update_resolved_checksums_unchanged(self, render, restart, config, checksum):
+        checksum.return_value = 'abc'
+        self._test_update_resolved_common(render, config)
+        restart.assert_not_called()
+
+    @mock.patch("lib_sysconfig.SysConfigHelper.get_checksum")
+    @mock.patch("lib_sysconfig.hookenv.config")
+    @mock.patch("lib_sysconfig.host.service_restart")
+    @mock.patch("lib_sysconfig.render")
+    def test_update_resolved_checksums_changed(self, render, restart, config, checksum):
+        checksum.side_effect = ['abc', 'def']
+        self._test_update_resolved_common(render, config)
+        restart.assert_called()
+
+    def _test_update_resolved_common(self, render, config):
+        config.return_value = {"resolved-cache-mode": "no-negative"}
+        sysh = lib_sysconfig.SysConfigHelper()
+        sysh.update_systemd_resolved()
+        render.assert_called_with(
+            source=lib_sysconfig.SYSTEMD_RESOLVED_TMPL,
+            target=lib_sysconfig.SYSTEMD_RESOLVED,
+            templates_dir="templates",
+            context={"cache": "no-negative"},
+        )
