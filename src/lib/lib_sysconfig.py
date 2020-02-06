@@ -2,7 +2,7 @@
 
 Manage grub, systemd, coufrequtils and kernel version configuration.
 """
-
+import hashlib
 import os
 import subprocess
 from datetime import datetime, timedelta, timezone
@@ -285,9 +285,12 @@ class SysConfigHelper:
         context = {}
         if self.resolved_cache_mode:
             context['cache'] = self.resolved_cache_mode
+        old_checksum = self.get_checksum(SYSTEMD_RESOLVED)
         self._render_resource(SYSTEMD_RESOLVED_TMPL, SYSTEMD_RESOLVED, context)
+        new_checksum = self.get_checksum(SYSTEMD_RESOLVED)
         hookenv.log('systemd-resolved configuration updated')
-        host.service_restart('systemd-resolved')
+        if new_checksum != old_checksum:
+            host.service_restart('systemd-resolved')
 
     def install_configured_kernel(self):
         """Install kernel as given by the kernel-version config option.
@@ -364,9 +367,12 @@ class SysConfigHelper:
         Will render resolved config with defaults.
         """
         context = {}
+        old_checksum = self.get_checksum(SYSTEMD_RESOLVED)
         self._render_resource(SYSTEMD_RESOLVED_TMPL, SYSTEMD_RESOLVED, context)
+        new_checksum = self.get_checksum(SYSTEMD_RESOLVED)
         hookenv.log('deleted resolved configuration at '.format(SYSTEMD_RESOLVED), hookenv.DEBUG)
-        host.service_restart('systemd-resolved')
+        if new_checksum != old_checksum:
+            host.service_restart('systemd-resolved')
 
     def remove_cpufreq_configuration(self):
         """Remove cpufrequtils configuration.
@@ -388,3 +394,7 @@ class SysConfigHelper:
             hookenv.DEBUG
         )
         host.service_restart('cpufrequtils')
+
+    def get_checksum(self, filename):
+        with open(filename, 'rb') as infile:
+            return hashlib.sha256(infile.read()).hexdigest()
