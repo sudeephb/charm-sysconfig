@@ -194,8 +194,12 @@ class SysConfigHelper:
 
     def _render_boot_resource(self, source, target, context):
         """Render the template and set the resource as changed."""
-        render(source=source, templates_dir='templates', target=target, context=context)
+        self._render_resource(source, target, context)
         self.boot_resources.set_resource(target)
+
+    def _render_resource(self, source, target, context):
+        """Render the template."""
+        render(source=source, templates_dir='templates', target=target, context=context)
 
     def _is_kernel_already_running(self):
         """Check if the kernel version required by charm config is equal to kernel running."""
@@ -276,13 +280,14 @@ class SysConfigHelper:
         self._render_boot_resource(SYSTEMD_SYSTEM_TMPL, SYSTEMD_SYSTEM, context)
         hookenv.log('systemd configuration updated')
 
-    def update_systemd_resolved_file(self):
+    def update_systemd_resolved(self):
         """Update /etc/systemd/resolved.conf according to charm configuration."""
         context = {}
         if self.resolved_cache_mode:
             context['cache'] = self.resolved_cache_mode
-        self._render_boot_resource(SYSTEMD_RESOLVED_TMPL, SYSTEMD_RESOLVED, context)
+        self._render_resource(SYSTEMD_RESOLVED_TMPL, SYSTEMD_RESOLVED, context)
         hookenv.log('systemd-resolved configuration updated')
+        host.service_restart('systemd-resolved')
 
     def install_configured_kernel(self):
         """Install kernel as given by the kernel-version config option.
@@ -359,11 +364,9 @@ class SysConfigHelper:
         Will render resolved config with defaults.
         """
         context = {}
-        self._render_boot_resource(SYSTEMD_RESOLVED_TMPL, SYSTEMD_RESOLVED, context)
-        hookenv.log(
-            'deleted systemd configuration at '.format(SYSTEMD_SYSTEM),
-            hookenv.DEBUG
-        )
+        self._render_resource(SYSTEMD_RESOLVED_TMPL, SYSTEMD_RESOLVED, context)
+        hookenv.log('deleted resolved configuration at '.format(SYSTEMD_RESOLVED), hookenv.DEBUG)
+        host.service_restart('systemd-resolved')
 
     def remove_cpufreq_configuration(self):
         """Remove cpufrequtils configuration.

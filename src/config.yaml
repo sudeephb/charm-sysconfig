@@ -124,7 +124,7 @@ options:
         - 'powersave'
   resolved-cache-mode:
     type: string
-    default: "yes"
+    default: ""
     description: |
         Sets the "Cache" configuration value in /etc/systemd/resolved.conf.  Valid
         values are '' (system default), 'yes', 'no', and 'no-negative'.

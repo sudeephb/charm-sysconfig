@@ -321,10 +321,7 @@ async def test_set_resolved_cache(app, model, jujutools, cache_setting):
     # NOTE: app.set_config() doesn't seem to wait for the model to go to a
     # non-active/idle state.
     try:
-        await model.block_until(
-            lambda: not is_model_settled(),
-            timeout=MODEL_ACTIVE_TIMEOUT
-        )
+        await model.block_until(lambda: not is_model_settled(), timeout=MODEL_ACTIVE_TIMEOUT)
     except websockets.ConnectionClosed:
         # It's possible (although unlikely) that we missed the charm transitioning from
         # idle to active and back.
@@ -332,10 +329,8 @@ async def test_set_resolved_cache(app, model, jujutools, cache_setting):
 
     await model.block_until(is_model_settled, timeout=TIMEOUT)
 
-    resolved_conf_content = await jujutools.file_contents(
-        '/etc/systemd/resolved.conf', app.units[0])
-    assert re.search('^Cache={}$'.format(cache_setting), resolved_conf_content,
-                     re.MULTILINE)
+    resolved_conf_content = await jujutools.file_contents('/etc/systemd/resolved.conf', app.units[0])
+    assert re.search('^Cache={}$'.format(cache_setting), resolved_conf_content, re.MULTILINE)
 
 
 async def test_uninstall(app, model, jujutools, series):

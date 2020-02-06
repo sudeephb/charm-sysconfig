@@ -28,9 +28,7 @@ from charms.reactive import (
     when_not,
 )
 
-from lib_sysconfig import (
-    CPUFREQUTILS, GRUB_CONF, KERNEL, SYSTEMD_SYSTEM, SYSTEMD_RESOLVED, SysConfigHelper,
-)
+from lib_sysconfig import CPUFREQUTILS, GRUB_CONF, KERNEL, SYSTEMD_SYSTEM, SYSTEMD_RESOLVED, SysConfigHelper
 
 
 @when_none('sysconfig.installed', 'sysconfig.unsupported')
@@ -56,6 +54,7 @@ def install_sysconfig():
     syshelper.update_cpufreq()
     syshelper.update_grub_file()
     syshelper.update_systemd_system_file()
+    syshelper.update_systemd_resolved()
     set_flag('sysconfig.installed')
     update_status()
 
@@ -109,7 +108,7 @@ def config_changed():
     if any(syshelper.charm_config.changed(flag) for flag in (
             'resolved-cache-mode',
     )) or helpers.any_file_changed([SYSTEMD_RESOLVED]):
-        syshelper.update_systemd_resolved_file()
+        syshelper.update_systemd_resolved()
 
     update_status()
 
@@ -122,7 +121,7 @@ def update_status():
     Note: After the reboot use clear-notification action to clear the
     'reboot required' message.
     """
-    resources = [KERNEL, SYSTEMD_SYSTEM, SYSTEMD_RESOLVED, GRUB_CONF]
+    resources = [KERNEL, SYSTEMD_SYSTEM, GRUB_CONF]
     boot_changes = SysConfigHelper.boot_resources.resources_changed_since_boot(resources)
 
     if boot_changes:

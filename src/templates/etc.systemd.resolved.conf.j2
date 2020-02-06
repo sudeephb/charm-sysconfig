@@ -20,7 +20,7 @@
 #DNSSEC=no
 #DNSOverTLS=no
 #Cache=yes
-{% if cache is defined -%}
+{% if cache -%}
 Cache={{ cache }}
 {% endif -%}
 #DNSStubListener=yes
