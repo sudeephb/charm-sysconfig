@@ -509,32 +509,21 @@ class TestLib:
 
         assert sysh.enable_container
 
-    def test_get_checksum(self):
-        fd, filename = tempfile.mkstemp()
-        os.close(fd)
-        sums = []
-        for body in ('foo', 'bar', 'foo'):
-            with open(filename, 'w') as outfile:
-                outfile.write(body)
-            sums.append(lib_sysconfig.SysConfigHelper.get_checksum(filename))
-        assert sums[0] != sums[1]
-        assert sums[0] == sums[2]
-
-    @mock.patch("lib_sysconfig.SysConfigHelper.get_checksum")
+    @mock.patch("lib_sysconfig.any_file_changed")
     @mock.patch("lib_sysconfig.hookenv.config")
     @mock.patch("lib_sysconfig.host.service_restart")
     @mock.patch("lib_sysconfig.render")
-    def test_update_resolved_checksums_unchanged(self, render, restart, config, checksum):
-        checksum.return_value = 'abc'
+    def test_update_resolved_file_unchanged(self, render, restart, config, file_changed):
+        file_changed.return_value = True
         self._test_update_resolved_common(render, config)
         restart.assert_not_called()
 
-    @mock.patch("lib_sysconfig.SysConfigHelper.get_checksum")
+    @mock.patch("lib_sysconfig.any_file_changed")
     @mock.patch("lib_sysconfig.hookenv.config")
     @mock.patch("lib_sysconfig.host.service_restart")
     @mock.patch("lib_sysconfig.render")
-    def test_update_resolved_checksums_changed(self, render, restart, config, checksum):
-        checksum.side_effect = ['abc', 'def']
+    def test_update_resolved_file_changed(self, render, restart, config, file_changed):
+        file_changed.return_value = True
         self._test_update_resolved_common(render, config)
         restart.assert_called()
 
