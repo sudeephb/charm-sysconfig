@@ -369,7 +369,7 @@ class SysConfigHelper:
 
     def _update_systemd_resolved(self, context):
         self._render_resource(SYSTEMD_RESOLVED_TMPL, SYSTEMD_RESOLVED, context)
-        if any_file_changed(SYSTEMD_RESOLVED):
+        if any_file_changed([SYSTEMD_RESOLVED]):
             host.service_restart('systemd-resolved')
 
     def remove_cpufreq_configuration(self):
