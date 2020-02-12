@@ -2,7 +2,6 @@
 
 Manage grub, systemd, coufrequtils and kernel version configuration.
 """
-import hashlib
 import os
 import subprocess
 from datetime import datetime, timedelta, timezone
