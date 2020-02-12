@@ -2,9 +2,11 @@
 
 import asyncio
 import os
+import re
 import subprocess
 
 import pytest
+import websockets
 
 
 # Treat all tests as coroutines
@@ -14,12 +16,12 @@ charm_build_dir = os.getenv('CHARM_BUILD_DIR', '..').rstrip('/')
 
 series = ['xenial',
           'bionic',
-          pytest.param('cosmic', marks=pytest.mark.xfail(reason='canary')),
           ]
 
 sources = [('local', '{}/builds/sysconfig'.format(charm_build_dir))]
 
 TIMEOUT = 600
+MODEL_ACTIVE_TIMEOUT = 10
 GRUB_DEFAULT = 'Advanced options for Ubuntu>Ubuntu, with Linux {}'
 PRINCIPAL_APP_NAME = 'ubuntu-{}'
 
@@ -269,14 +271,19 @@ async def test_wrong_reservation(app, model):
     )
 
 
-async def test_wrong_raid_autodetection(app, model):
-    """Tests wrong raid-autodetection value is used.
+@pytest.mark.parametrize('key,bad_value,good_value', [
+    ('raid-autodetection', 'changeme', ''),
+    ('governor', 'changeme', ''),
+    ('resolved-cache-mode', 'changeme', ''),
+])
+async def test_invalid_configuration_parameters(app, model, key, bad_value, good_value):
+    """Tests wrong config value is used.
 
     Expect application is blocked until correct value is set.
     """
     await app.set_config(
         {
-            'raid-autodetection': 'changeme'
+            key: bad_value
         }
     )
     await model.block_until(
@@ -289,7 +296,7 @@ async def test_wrong_raid_autodetection(app, model):
 
     await app.set_config(
         {
-            'raid-autodetection': ''
+            key: good_value
         }
     )
     await model.block_until(
@@ -298,33 +305,32 @@ async def test_wrong_raid_autodetection(app, model):
     )
 
 
-async def test_wrong_governor(app, model):
-    """Tests wrong governor value is used.
+@pytest.mark.parametrize('cache_setting', [
+    'yes',
+    'no',
+    'no-negative',
+])
+async def test_set_resolved_cache(app, model, jujutools, cache_setting):
+    """Tests resolved cache settings."""
+    def is_model_settled():
+        return app.units[0].workload_status == 'active' and app.units[0].agent_status == 'idle'
 
-    Expect application is blocked until correct value is set.
-    """
-    await app.set_config(
-        {
-            'governor': 'changeme'
-        }
-    )
-    await model.block_until(
-        lambda: app.status == 'blocked',
-        timeout=TIMEOUT
-    )
-    assert app.status == 'blocked'
-    unit = app.units[0]
-    assert 'configuration parameters not valid.' in unit.workload_status_message
+    await model.block_until(is_model_settled, timeout=TIMEOUT)
 
-    await app.set_config(
-        {
-            'governor': ''
-        }
-    )
-    await model.block_until(
-        lambda: app.status == 'active',
-        timeout=TIMEOUT
-    )
+    await app.set_config({'resolved-cache-mode': cache_setting})
+    # NOTE: app.set_config() doesn't seem to wait for the model to go to a
+    # non-active/idle state.
+    try:
+        await model.block_until(lambda: not is_model_settled(), timeout=MODEL_ACTIVE_TIMEOUT)
+    except websockets.ConnectionClosed:
+        # It's possible (although unlikely) that we missed the charm transitioning from
+        # idle to active and back.
+        pass
+
+    await model.block_until(is_model_settled, timeout=TIMEOUT)
+
+    resolved_conf_content = await jujutools.file_contents('/etc/systemd/resolved.conf', app.units[0])
+    assert re.search('^Cache={}$'.format(cache_setting), resolved_conf_content, re.MULTILINE)
 
 
 async def test_uninstall(app, model, jujutools, series):
@@ -364,6 +370,10 @@ async def test_uninstall(app, model, jujutools, series):
     systemd_path = '/etc/systemd/system.conf'
     systemd_content = await jujutools.file_contents(systemd_path, unit)
     assert 'CPUAffinity=1,2,3,4' not in systemd_content
+
+    resolved_path = '/etc/systemd/resolved.conf'
+    resolved_content = await jujutools.file_contents(resolved_path, unit)
+    assert not re.search('^Cache=', resolved_content, re.MULTILINE)
 
     cpufreq_path = '/etc/default/cpufrequtils'
     cpufreq_content = await jujutools.file_contents(cpufreq_path, unit)

@@ -28,7 +28,7 @@ from charms.reactive import (
     when_not,
 )
 
-from lib_sysconfig import CPUFREQUTILS, GRUB_CONF, KERNEL, SYSTEMD_SYSTEM, SysConfigHelper
+from lib_sysconfig import CPUFREQUTILS, GRUB_CONF, KERNEL, SYSTEMD_SYSTEM, SYSTEMD_RESOLVED, SysConfigHelper
 
 
 @when_none('sysconfig.installed', 'sysconfig.unsupported')
@@ -54,6 +54,7 @@ def install_sysconfig():
     syshelper.update_cpufreq()
     syshelper.update_grub_file()
     syshelper.update_systemd_system_file()
+    syshelper.update_systemd_resolved()
     set_flag('sysconfig.installed')
     update_status()
 
@@ -103,6 +104,12 @@ def config_changed():
     )) or helpers.any_file_changed([SYSTEMD_SYSTEM]):
         syshelper.update_systemd_system_file()
 
+    # systemd resolved
+    if any(syshelper.charm_config.changed(flag) for flag in (
+            'resolved-cache-mode',
+    )) or helpers.any_file_changed([SYSTEMD_RESOLVED]):
+        syshelper.update_systemd_resolved()
+
     update_status()
 
 
@@ -142,5 +149,6 @@ def remove_configuration():
     syshelper.remove_cpufreq_configuration()
     syshelper.remove_grub_configuration()
     syshelper.remove_systemd_configuration()
+    syshelper.remove_resolved_configuration()
     clear_flag('sysconfig.installed')
     clear_flag('sysconfig.unsupported')

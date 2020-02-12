@@ -1,13 +1,14 @@
 #!/usr/bin/python3
 """Unit tests for SysConfigHelper and BootResourceState classes."""
-
-
+import os
 import subprocess
+import tempfile
 from datetime import datetime, timezone
 
 import lib_sysconfig
 
 import mock
+import pytest
 
 
 class TestBootResourceState:
@@ -479,45 +480,22 @@ class TestLib:
         )
         restart.assert_called()
 
+    @pytest.mark.parametrize("invalid_config_key", [
+        "reservation", "raid-autodetection", "governor", "resolved-cache-mode"])
     @mock.patch("lib_sysconfig.hookenv.config")
-    def test_wrong_reservation(self, config):
-        """Test wrong reservation value.
+    def test_wrong_config(self, config, invalid_config_key):
+        """Test wrong configuration value.
 
         Expect that is_config_valid() return false
         """
-        config.return_value = {
-            "reservation": "wrong",
-            "raid-autodetection": "",
-            "governor": ""
-        }
-        sysh = lib_sysconfig.SysConfigHelper()
-        assert not sysh.is_config_valid()
-
-    @mock.patch("lib_sysconfig.hookenv.config")
-    def test_wrong_raid(self, config):
-        """Test wrong raid autodetection value.
-
-        Expect that is_config_valid() return false
-        """
-        config.return_value = {
-            "reservation": "off",
-            "raid-autodetection": "wrong",
-            "governor": ""
-        }
-        sysh = lib_sysconfig.SysConfigHelper()
-        assert not sysh.is_config_valid()
-
-    @mock.patch("lib_sysconfig.hookenv.config")
-    def test_wrong_governor(self, config):
-        """Test wrong governor value.
-
-        Expect that is_config_valid() return false
-        """
-        config.return_value = {
+        return_value = {
             "reservation": "off",
             "raid-autodetection": "",
-            "governor": "wrong"
+            "governor": "",
+            "resolved-cache-mode": "",
+            invalid_config_key: 'wrong',  # Will override the selected key with an invalid value
         }
+        config.return_value = return_value
         sysh = lib_sysconfig.SysConfigHelper()
         assert not sysh.is_config_valid()
 
@@ -530,3 +508,32 @@ class TestLib:
         sysh = lib_sysconfig.SysConfigHelper()
 
         assert sysh.enable_container
+
+    @mock.patch("lib_sysconfig.any_file_changed")
+    @mock.patch("lib_sysconfig.hookenv.config")
+    @mock.patch("lib_sysconfig.host.service_restart")
+    @mock.patch("lib_sysconfig.render")
+    def test_update_resolved_file_unchanged(self, render, restart, config, file_changed):
+        file_changed.return_value = True
+        self._test_update_resolved_common(render, config)
+        restart.assert_not_called()
+
+    @mock.patch("lib_sysconfig.any_file_changed")
+    @mock.patch("lib_sysconfig.hookenv.config")
+    @mock.patch("lib_sysconfig.host.service_restart")
+    @mock.patch("lib_sysconfig.render")
+    def test_update_resolved_file_changed(self, render, restart, config, file_changed):
+        file_changed.return_value = True
+        self._test_update_resolved_common(render, config)
+        restart.assert_called()
+
+    def _test_update_resolved_common(self, render, config):
+        config.return_value = {"resolved-cache-mode": "no-negative"}
+        sysh = lib_sysconfig.SysConfigHelper()
+        sysh.update_systemd_resolved()
+        render.assert_called_with(
+            source=lib_sysconfig.SYSTEMD_RESOLVED_TMPL,
+            target=lib_sysconfig.SYSTEMD_RESOLVED,
+            templates_dir="templates",
+            context={"cache": "no-negative"},
+        )

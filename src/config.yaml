@@ -122,3 +122,9 @@ options:
                         Recommended option when Bios control power is set to the OS.
         - 'performance'
         - 'powersave'
+  resolved-cache-mode:
+    type: string
+    default: ""
+    description: |
+        Sets the "Cache" configuration value in /etc/systemd/resolved.conf.  Valid
+        values are '' (system default), 'yes', 'no', and 'no-negative'.

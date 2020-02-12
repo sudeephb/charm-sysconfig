@@ -2,7 +2,6 @@
 
 Manage grub, systemd, coufrequtils and kernel version configuration.
 """
-
 import os
 import subprocess
 from datetime import datetime, timedelta, timezone
@@ -11,15 +10,18 @@ from charmhelpers.contrib.openstack.utils import config_flags_parser
 from charmhelpers.core import hookenv, host, unitdata
 from charmhelpers.core.templating import render
 from charmhelpers.fetch import apt_install, apt_update
+from charms.reactive.helpers import any_file_changed
 
 GRUB_DEFAULT = 'Advanced options for Ubuntu>Ubuntu, with Linux {}'
 CPUFREQUTILS_TMPL = 'cpufrequtils.j2'
 GRUB_CONF_TMPL = 'grub.j2'
 SYSTEMD_SYSTEM_TMPL = 'etc.systemd.system.conf.j2'
+SYSTEMD_RESOLVED_TMPL = 'etc.systemd.resolved.conf.j2'
 
 CPUFREQUTILS = '/etc/default/cpufrequtils'
 GRUB_CONF = '/etc/default/grub.d/90-sysconfig.cfg'
 SYSTEMD_SYSTEM = '/etc/systemd/system.conf'
+SYSTEMD_RESOLVED = '/etc/systemd/resolved.conf'
 KERNEL = 'kernel'
 
 
@@ -155,23 +157,28 @@ class SysConfigHelper:
 
     @property
     def systemd_config_flags(self):
-        """Return grub-config-flags config option."""
+        """Return systemd-config-flags config option."""
         return parse_config_flags(self.charm_config['systemd-config-flags'])
 
     @property
     def kernel_version(self):
-        """Return grub-config-flags config option."""
+        """Return kernel-version config option."""
         return self.charm_config['kernel-version']
 
     @property
     def update_grub(self):
-        """Return grub-config-flags config option."""
+        """Return update-grub config option."""
         return self.charm_config['update-grub']
 
     @property
     def governor(self):
-        """Return grub-config-flags config option."""
+        """Return governor config option."""
         return self.charm_config['governor']
+
+    @property
+    def resolved_cache_mode(self):
+        """Return resolved-cache-mode config option."""
+        return self.charm_config['resolved-cache-mode']
 
     @property
     def config_flags(self):
@@ -187,8 +194,13 @@ class SysConfigHelper:
 
     def _render_boot_resource(self, source, target, context):
         """Render the template and set the resource as changed."""
-        render(source=source, templates_dir='templates', target=target, context=context)
+        self._render_resource(source, target, context)
         self.boot_resources.set_resource(target)
+
+    @staticmethod
+    def _render_resource(source, target, context):
+        """Render the template."""
+        render(source=source, templates_dir='templates', target=target, context=context)
 
     def _is_kernel_already_running(self):
         """Check if the kernel version required by charm config is equal to kernel running."""
@@ -208,18 +220,15 @@ class SysConfigHelper:
         """Validate config parameters."""
         valid = True
 
-        if self.reservation not in ['off', 'isolcpus', 'affinity']:
-            hookenv.log('reservation not valid. Possible values: ["off", "isolcpus", "affinity"]', hookenv.DEBUG)
-            valid = False
-
-        if self.raid_autodetection not in ['', 'noautodetect', 'partitionable']:
-            hookenv.log('raid-autodetection not valid. '
-                        'Possible values: ["off", "noautodetect", "partitionable"]', hookenv.DEBUG)
-            valid = False
-
-        if self.governor not in ['', 'powersave', 'performance']:
-            hookenv.log('governor not valid. Possible values: ["", "powersave", "performance"]', hookenv.DEBUG)
-            valid = False
+        for config_key, value, valid_values in (
+                ('reservation', self.reservation, ['off', 'isolcpus', 'affinity']),
+                ('raid-autodetection', self.raid_autodetection, ['', 'noautodetect', 'partitionable']),
+                ('governor', self.governor, ['', 'powersave', 'performance']),
+                ('resolved-cache-mode', self.resolved_cache_mode, ['', 'yes', 'no', 'no-negative']),
+        ):
+            if value not in valid_values:
+                hookenv.log('{} not valid. Possible values: {}'.format(config_key, repr(valid_values)), hookenv.DEBUG)
+                valid = False
 
         return valid
 
@@ -271,6 +280,14 @@ class SysConfigHelper:
 
         self._render_boot_resource(SYSTEMD_SYSTEM_TMPL, SYSTEMD_SYSTEM, context)
         hookenv.log('systemd configuration updated')
+
+    def update_systemd_resolved(self):
+        """Update /etc/systemd/resolved.conf according to charm configuration."""
+        context = {}
+        if self.resolved_cache_mode:
+            context['cache'] = self.resolved_cache_mode
+        self._update_systemd_resolved(context)
+        hookenv.log('systemd-resolved configuration updated')
 
     def install_configured_kernel(self):
         """Install kernel as given by the kernel-version config option.
@@ -340,6 +357,19 @@ class SysConfigHelper:
             'deleted systemd configuration at '.format(SYSTEMD_SYSTEM),
             hookenv.DEBUG
         )
+
+    def remove_resolved_configuration(self):
+        """Remove systemd's resolved configuration.
+
+        Will render resolved config with defaults.
+        """
+        self._update_systemd_resolved({})
+        hookenv.log('deleted resolved configuration at '.format(SYSTEMD_RESOLVED), hookenv.DEBUG)
+
+    def _update_systemd_resolved(self, context):
+        self._render_resource(SYSTEMD_RESOLVED_TMPL, SYSTEMD_RESOLVED, context)
+        if any_file_changed([SYSTEMD_RESOLVED]):
+            host.service_restart('systemd-resolved')
 
     def remove_cpufreq_configuration(self):
         """Remove cpufrequtils configuration.
