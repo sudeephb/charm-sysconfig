@@ -1,13 +1,12 @@
 #!/usr/bin/python3
 """Unit tests for SysConfigHelper and BootResourceState classes."""
-import os
 import subprocess
-import tempfile
 from datetime import datetime, timezone
 
 import lib_sysconfig
 
 import mock
+
 import pytest
 
 
@@ -514,6 +513,7 @@ class TestLib:
     @mock.patch("lib_sysconfig.host.service_restart")
     @mock.patch("lib_sysconfig.render")
     def test_update_resolved_file_unchanged(self, render, restart, config, file_changed):
+        """systemd-resolved is not restarted when the config file is unchanged."""
         file_changed.return_value = False
         self._test_update_resolved_common(render, config)
         restart.assert_not_called()
@@ -523,11 +523,13 @@ class TestLib:
     @mock.patch("lib_sysconfig.host.service_restart")
     @mock.patch("lib_sysconfig.render")
     def test_update_resolved_file_changed(self, render, restart, config, file_changed):
+        """systemd-resolved is restarted when the config file changes."""
         file_changed.return_value = True
         self._test_update_resolved_common(render, config)
         restart.assert_called()
 
     def _test_update_resolved_common(self, render, config):
+        """Call the render function with specific parameters."""
         config.return_value = {"resolved-cache-mode": "no-negative"}
         sysh = lib_sysconfig.SysConfigHelper()
         sysh.update_systemd_resolved()

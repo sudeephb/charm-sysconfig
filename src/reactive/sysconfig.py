@@ -28,7 +28,7 @@ from charms.reactive import (
     when_not,
 )
 
-from lib_sysconfig import CPUFREQUTILS, GRUB_CONF, KERNEL, SYSTEMD_SYSTEM, SYSTEMD_RESOLVED, SysConfigHelper
+from lib_sysconfig import CPUFREQUTILS, GRUB_CONF, KERNEL, SYSTEMD_RESOLVED, SYSTEMD_SYSTEM, SysConfigHelper
 
 
 @when_none('sysconfig.installed', 'sysconfig.unsupported')
