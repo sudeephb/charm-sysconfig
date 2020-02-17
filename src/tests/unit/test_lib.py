@@ -514,7 +514,7 @@ class TestLib:
     @mock.patch("lib_sysconfig.host.service_restart")
     @mock.patch("lib_sysconfig.render")
     def test_update_resolved_file_unchanged(self, render, restart, config, file_changed):
-        file_changed.return_value = True
+        file_changed.return_value = False
         self._test_update_resolved_common(render, config)
         restart.assert_not_called()
 
