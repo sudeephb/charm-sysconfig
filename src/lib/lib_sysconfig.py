@@ -10,6 +10,7 @@ from charmhelpers.contrib.openstack.utils import config_flags_parser
 from charmhelpers.core import hookenv, host, unitdata
 from charmhelpers.core.templating import render
 from charmhelpers.fetch import apt_install, apt_update
+
 from charms.reactive.helpers import any_file_changed
 
 GRUB_DEFAULT = 'Advanced options for Ubuntu>Ubuntu, with Linux {}'
