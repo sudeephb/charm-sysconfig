@@ -2,6 +2,7 @@
 
 Manage grub, systemd, coufrequtils and kernel version configuration.
 """
+import hashlib
 import os
 import subprocess
 from datetime import datetime, timedelta, timezone
@@ -75,10 +76,31 @@ class BootResourceState:
         """Return db key for a given resource."""
         return "sysconfig.boot_resource.{}".format(resource_name)
 
+    def calculate_resource_sha256sum(self, resource_name):
+        """Calcucate sha256sum of contents of provided resource."""
+        sha = hashlib.sha256()
+        sha.update(open(resource_name, 'rb').read())
+        return sha.hexdigest()
+
+    def update_resource_checksums(self, resources):
+        """Update db entry for the resource_name with sha256sum of its contents."""
+        for resource in resources:
+            if not os.path.exists(resource):
+                continue
+
+            self.db.set("{}.sha256sum".format(self.key_for(resource)),
+                        self.calculate_resource_sha256sum(resource))
+
     def set_resource(self, resource_name):
         """Update db entry for the resource_name with time.now."""
         timestamp = datetime.now(timezone.utc)
         self.db.set(self.key_for(resource_name), timestamp.timestamp())
+        # NOTE: don't set checksum here
+
+    def get_resource_sha256sum(self, resource_name):
+        """Get db record of sha256sum of contents of provided resource."""
+        key = self.key_for(resource_name)
+        return self.db.get("{}.sha256sum".format(key))
 
     def get_resource_changed_timestamp(self, resource_name):
         """Retrieve timestamp of last resource change recorded.
@@ -91,6 +113,20 @@ class BootResourceState:
             return datetime.fromtimestamp(tfloat, timezone.utc)
         return datetime.min.replace(tzinfo=timezone.utc)  # We don't have a ts -> changed at dawn of time
 
+    def checksum_changed(self, resource_name):
+        """Return True if checksum has changed since last recorded."""
+        # NOTE: we treat checksum == None as True because this is required for
+        #       backwards compatibility (see bug 1864217) since new resources
+        #       created since the charm was patched will always have a checksum.
+        if not self.get_resource_sha256sum(resource_name):
+            return True
+
+        new_sum = self.calculate_resource_sha256sum(resource_name)
+        if self.get_resource_sha256sum(resource_name) != new_sum:
+            return True
+
+        return False
+
     def resources_changed_since_boot(self, resource_names):
         """Given a list of resource names return those that have changed since boot.
 
@@ -98,8 +134,25 @@ class BootResourceState:
         :return: list of names
         """
         boot_ts = boot_time()
-        changed = [name for name in resource_names if boot_ts < self.get_resource_changed_timestamp(name)]
-        return changed
+        time_changed = [name for name in resource_names
+                        if boot_ts < self.get_resource_changed_timestamp(name)]
+
+        csum_changed = [name for name in resource_names
+                        if self.checksum_changed(name)]
+
+        a = set(time_changed)
+        b = set(csum_changed)
+        c = set(csum_changed).difference(set(time_changed))
+        d = set(b).difference(c)
+        # i.e. update resources that have csum mismatch but did not change
+        # since boot (we only ever update csum here).
+        self.update_resource_checksums(c)
+
+        # i.e. resources that have changed since boot time that do have csum
+        # mismatch.
+        changed = a.intersection(d)
+
+        return list(changed)
 
 
 class SysConfigHelper:
