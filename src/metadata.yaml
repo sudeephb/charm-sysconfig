@@ -16,7 +16,7 @@
 
 name: sysconfig
 summary: System related configurations
-maintainer: LMA Charmers <llama-charmers@lists.ubuntu.com>
+maintainer: BootStack Charmers <bootstack-charmers@lists.canonical.com>
 description: |
   SYSConfig can configure cpufreq governor (ie powersave, performance),
   and CPU Affinity or Kernel's isolcpus details in systemd-sytem.conf
