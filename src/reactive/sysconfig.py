@@ -22,6 +22,7 @@ from charms.reactive import (
     clear_flag,
     helpers,
     hook,
+    is_flag_set,
     set_flag,
     when,
     when_none,
@@ -114,13 +115,15 @@ def config_changed():
 
 
 @hook('update-status')
-@when_not('sysconfig.unsupported')
 def update_status():
     """Update the workload message checking if reboot is needed.
 
     Note: After the reboot use clear-notification action to clear the
     'reboot required' message.
     """
+    if is_flag_set('sysconfig.unsupported'):
+        return
+
     resources = [KERNEL, SYSTEMD_SYSTEM, GRUB_CONF]
     boot_changes = SysConfigHelper.boot_resources.resources_changed_since_boot(resources)
 
