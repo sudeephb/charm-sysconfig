@@ -312,20 +312,20 @@ class SysConfigHelper:
             return
         context = {'governor': self.governor}
         self._render_boot_resource(CPUFREQUTILS_TMPL, CPUFREQUTILS, context)
-        # Ensure the ondemand initscript is disabled if governor is set, lp#1822774 and lp#740127
-        # Ondemand init script is not updated during test if host is container.
+        # Ensure the ondemand service is disabled if governor is set, lp#1822774, lp#1863659, lp#740127
+        # Ondemand service is not updated during test if host is container.
         if host.get_distrib_codename() == 'xenial' and not host.is_container():
-            hookenv.log('disabling the ondemand initscript for lp#1822774'
+            hookenv.log('disabling the ondemand services for lp#1822774, lp#1863659,'
                         ' and lp#740127 if a governor is specified', hookenv.DEBUG)
             if self.governor:
                 subprocess.call(
-                    ['/usr/sbin/update-rc.d', '-f', 'ondemand', 'remove'],
+                    ['/bin/systemctl', 'mask', 'ondemand'],
                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
                 )
             else:
                 # Renable ondemand when governor is unset.
                 subprocess.call(
-                    ['/usr/sbin/update-rc.d', '-f', 'ondemand', 'defaults'],
+                    ['/bin/systemctl', 'unmask', 'ondemand'],
                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
                 )
 
@@ -382,7 +382,7 @@ class SysConfigHelper:
             hookenv.log('Enabling the ondemand initscript for lp#1822774'
                         ' and lp#740127', 'DEBUG')
             subprocess.call(
-                ['/usr/sbin/update-rc.d', '-f', 'ondemand', 'defaults'],
+                ['/bin/systemctl', 'unmask', 'ondemand'],
                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
             )
 

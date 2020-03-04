@@ -101,9 +101,8 @@ class TestLib:
             context=expected,
         )
         check_call.assert_called_with(
-            ['/usr/sbin/update-rc.d', '-f', 'ondemand', 'remove'],
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-        )
+            ['/bin/systemctl', 'mask', 'ondemand'],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     @mock.patch("lib_sysconfig.subprocess.call")
     @mock.patch("lib_sysconfig.host.get_distrib_codename")
@@ -129,9 +128,8 @@ class TestLib:
         )
         restart.assert_called()
         check_call.assert_called_with(
-            ['/usr/sbin/update-rc.d', '-f', 'ondemand', 'defaults'],
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-        )
+            ['/bin/systemctl', 'unmask', 'ondemand'],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     @mock.patch("lib_sysconfig.subprocess.call")
     @mock.patch("lib_sysconfig.host.get_distrib_codename")
@@ -470,7 +468,9 @@ class TestLib:
         sysh = lib_sysconfig.SysConfigHelper()
         sysh.remove_cpufreq_configuration()
 
-        check_call.assert_called()
+        check_call.assert_called_with(
+            ['/bin/systemctl', 'unmask', 'ondemand'],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         render.assert_called_with(
             source=lib_sysconfig.CPUFREQUTILS_TMPL,
             target=lib_sysconfig.CPUFREQUTILS,
