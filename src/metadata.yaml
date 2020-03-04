@@ -29,8 +29,8 @@ tags:
   - affinity
   - isolcpus
 series:
-  - focal
   - bionic
+  - focal
   - xenial
 subordinate: true
 requires:
