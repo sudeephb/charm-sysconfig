@@ -17,6 +17,8 @@ charm_build_dir = os.getenv('CHARM_BUILD_DIR', '..').rstrip('/')
 
 series = ['xenial',
           'bionic',
+# Make focal as xfail, since it's not released yet and this enables a forced installation for testing
+          pytest.param('focal', marks=pytest.mark.xfail(reason='pending_release')),
           ]
 
 sources = [('local', '{}/builds/sysconfig'.format(charm_build_dir))]
@@ -156,6 +158,10 @@ async def test_default_config(app, jujutools):
 async def test_config_changed(app, model, jujutools):
     """Test configuration changed for grub, systemd, cpufrqutils and kernel."""
     kernel_version = '4.15.0-38-generic'
+    if 'focal' in app.entity_id:
+        # override the kernel_version for focal, we specify the oldest one ever released, as normal installations
+        # will updated to newest available
+        kernel_version = '5.4.0-9-generic'
     linux_pkg = 'linux-image-{}'.format(kernel_version)
     linux_modules_extra_pkg = 'linux-modules-extra-{}'.format(kernel_version)
 
