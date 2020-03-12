@@ -30,6 +30,7 @@ tags:
   - isolcpus
 series:
   - bionic
+  - focal
   - xenial
 subordinate: true
 requires:
