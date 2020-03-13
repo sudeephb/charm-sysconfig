@@ -1,7 +1,8 @@
 #!/usr/bin/python3
 """Unit tests for SysConfigHelper and BootResourceState classes."""
 import subprocess
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
+from tempfile import NamedTemporaryFile
 
 import lib_sysconfig
 
@@ -13,16 +14,28 @@ import pytest
 class TestBootResourceState:
     """Test BootResourceState class."""
 
+    @property
+    def datetime(self):
+        """Return a datetime object."""
+        return datetime(2019, 1, 1, tzinfo=timezone.utc)
+
     def boot_resource(self):
         """Mock unitdata.kv()."""
         db = mock.MagicMock()
-        db.get.return_value = datetime(2019, 1, 1, tzinfo=timezone.utc).timestamp()
+
+        def fake_db_get(key):
+            if key.endswith("sha256sum"):
+                return "1234"
+            else:
+                return self.datetime.timestamp()
+
+        db.get.side_effect = fake_db_get
         return lib_sysconfig.BootResourceState(db=db)
 
     @mock.patch("lib_sysconfig.datetime")
     def test_set_resource(self, mock_datetime):
         """Test updating resource entry in the db."""
-        test_time = datetime(2019, 1, 1, tzinfo=timezone.utc)
+        test_time = self.datetime
         mock_datetime.now.return_value = test_time
         boot_resource = self.boot_resource()
         boot_resource.set_resource("foofile")
@@ -34,7 +47,7 @@ class TestBootResourceState:
 
     def test_get_resource(self):
         """Test retrieving timestamp of last resource update."""
-        test_time = datetime(2019, 1, 1, tzinfo=timezone.utc)
+        test_time = self.datetime
         boot_resource = self.boot_resource()
         timestamp = boot_resource.get_resource_changed_timestamp("foofile")
         assert timestamp == test_time
@@ -54,17 +67,43 @@ class TestBootResourceState:
         """Test retrieving of resources changed since last boot."""
         mock_boot_time.return_value = datetime.min.replace(tzinfo=timezone.utc)
         boot_resource = self.boot_resource()
-        changed = boot_resource.resources_changed_since_boot(["foofile"])
-        assert len(changed) == 1
-        assert changed[0] == "foofile"
+        with NamedTemporaryFile() as ftmp:
+            changed = boot_resource.resources_changed_since_boot([ftmp.name])
+            assert len(changed) == 1
+            assert changed[0] == ftmp.name
 
     @mock.patch("lib_sysconfig.boot_time")
-    def test_resources_changed_future(self, mock_boot_time):
+    def test_resources_not_changed(self, mock_boot_time):
         """Test resource is not changed since last boot."""
-        mock_boot_time.return_value = datetime.max.replace(tzinfo=timezone.utc)
+        mock_boot_time.return_value = self.datetime
         boot_resource = self.boot_resource()
-        changed = boot_resource.resources_changed_since_boot(["foofile"])
-        assert not changed
+        with NamedTemporaryFile() as ftmp:
+            changed = boot_resource.resources_changed_since_boot([ftmp.name])
+            assert not changed
+
+    @mock.patch("lib_sysconfig.boot_time")
+    def test_resources_time_changed_contents_no_change(self, mock_boot_time):
+        """Test resource is not changed since last boot."""
+        mock_boot_time.return_value = self.datetime - timedelta(1)
+        boot_resource = self.boot_resource()
+        with NamedTemporaryFile() as ftmp:
+            with mock.patch.object(boot_resource,
+                                   'calculate_resource_sha256sum') as mock_calc:
+                mock_calc.return_value = "1234"
+                changed = boot_resource.resources_changed_since_boot([ftmp.name])
+                assert not changed
+
+    @mock.patch("lib_sysconfig.boot_time")
+    def test_resources_time_changed_contents_changed(self, mock_boot_time):
+        """Test resource is not changed since last boot."""
+        mock_boot_time.return_value = self.datetime - timedelta(1)
+        boot_resource = self.boot_resource()
+        with NamedTemporaryFile() as ftmp:
+            with mock.patch.object(boot_resource,
+                                   'calculate_resource_sha256sum') as mock_calc:
+                mock_calc.return_value = "2345"
+                changed = boot_resource.resources_changed_since_boot([ftmp.name])
+                assert changed
 
 
 class TestLib:
@@ -411,10 +450,11 @@ class TestLib:
         }
         exists.return_value = True
 
-        sysh = lib_sysconfig.SysConfigHelper()
-        sysh.remove_grub_configuration()
-
-        os_remove.assert_called_with(lib_sysconfig.GRUB_CONF)
+        with NamedTemporaryFile() as ftmp:
+            lib_sysconfig.GRUB_CONF = ftmp.name
+            sysh = lib_sysconfig.SysConfigHelper()
+            sysh.remove_grub_configuration()
+            os_remove.assert_called_with(lib_sysconfig.GRUB_CONF)
 
     @mock.patch("lib_sysconfig.hookenv.config")
     @mock.patch("lib_sysconfig.os.remove")

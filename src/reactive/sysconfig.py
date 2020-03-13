@@ -114,6 +114,16 @@ def config_changed():
     update_status()
 
 
+@hook('upgrade-charm')
+def upgrade_charm():
+    """Extras to run when charm is upgraded."""
+    # NOTE(hopem): do this for backwards compatibility to ensure that db
+    # records of resources are updated with a sha256sum prior to config-changed
+    # being run where they may be overwritten with no content change - see bug
+    # 1864217 for context.
+    update_status()
+
+
 @hook('update-status')
 def update_status():
     """Update the workload message checking if reboot is needed.
