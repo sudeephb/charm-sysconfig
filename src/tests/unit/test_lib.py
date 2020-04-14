@@ -571,3 +571,23 @@ class TestLib:
             templates_dir="templates",
             context={"cache": "no-negative"},
         )
+
+    @mock.patch("lib_sysconfig.hookenv.config")
+    @mock.patch("charmhelpers.core.sysctl.check_call")
+    def test_update_sysctl(self, check_call, config):
+        config.return_value = {"sysctls": """---
+net.ipv4.ip_forward: 1
+vm.swappiness: 60"""}
+        sysh = lib_sysconfig.SysConfigHelper()
+        with mock.patch("builtins.open", mock.mock_open()) as mock_file:
+            sysh.update_sysctl()
+
+        mock_file.assert_called_with(sysh.sysctl_file, 'w')
+        handle = mock_file()
+        handle.write.has_calls([
+            mock.call('net.ipv4.ip_forward=1\n'),
+            mock.call('vm.swappiness=60\n'),
+        ])
+        check_call.assert_called_with([
+            'sysctl', '-p', sysh.sysctl_file
+        ])

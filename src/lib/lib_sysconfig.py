@@ -10,6 +10,7 @@ from datetime import datetime, timedelta, timezone
 from charmhelpers.contrib.openstack.utils import config_flags_parser
 from charmhelpers.core import hookenv, host, unitdata
 from charmhelpers.core.templating import render
+import charmhelpers.core.sysctl as sysctl
 from charmhelpers.fetch import apt_install, apt_update
 
 from charms.reactive.helpers import any_file_changed
@@ -24,6 +25,7 @@ CPUFREQUTILS = '/etc/default/cpufrequtils'
 GRUB_CONF = '/etc/default/grub.d/90-sysconfig.cfg'
 SYSTEMD_SYSTEM = '/etc/systemd/system.conf'
 SYSTEMD_RESOLVED = '/etc/systemd/resolved.conf'
+SYSCTL_CONF = '/etc/sysctl.d/90-charm-sysconfig.conf'
 KERNEL = 'kernel'
 
 
@@ -235,6 +237,15 @@ class SysConfigHelper:
         return self.charm_config['resolved-cache-mode']
 
     @property
+    def sysctls(self):
+        """Return sysctls config option."""
+        return self.charm_config['sysctls']
+
+    @property
+    def sysctl_file(self):
+        return SYSCTL_CONF
+
+    @property
     def config_flags(self):
         """Return parsed config-flags into dict.
 
@@ -343,13 +354,18 @@ class SysConfigHelper:
         self._update_systemd_resolved(context)
         hookenv.log('systemd-resolved configuration updated')
 
+    def update_sysctl(self):
+        sysctl.create(self.sysctls or {}, self.sysctl_file)
+        hookenv.log('sysctl updated')
+
     def install_configured_kernel(self):
         """Install kernel as given by the kernel-version config option.
 
         Will install kernel and matching modules-extra package
         """
         if not self.kernel_version or self._is_kernel_already_running():
-            hookenv.log('kernel running already to the reuired version', hookenv.DEBUG)
+            hookenv.log('kernel running already to the required version',
+                        hookenv.DEBUG)
             return
 
         configured = self.kernel_version
