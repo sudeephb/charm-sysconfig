@@ -340,8 +340,8 @@ async def test_set_resolved_cache(app, model, jujutools, cache_setting):
     assert re.search('^Cache={}$'.format(cache_setting), resolved_conf_content, re.MULTILINE)
 
 
-@pytest.mark.parametrize('sysctls', ['1', '0'])
-async def test_set_sysctl(app, model, jujutools, sysctls):
+@pytest.mark.parametrize('sysctl', ['1', '0'])
+async def test_set_sysctl(app, model, jujutools, sysctl):
     """Tests sysctl settings."""
     def is_model_settled():
         return app.units[0].workload_status == 'active' and app.units[0].agent_status == 'idle'
@@ -349,7 +349,7 @@ async def test_set_sysctl(app, model, jujutools, sysctls):
     await model.block_until(is_model_settled, timeout=TIMEOUT)
 
     await app.set_config({
-        'sysctls': "---\nnet.ipv4.ip_forward: %s" % sysctls
+        'sysctl': "---\nnet.ipv4.ip_forward: %s" % sysctl
     })
     # NOTE: app.set_config() doesn't seem to wait for the model to go to a
     # non-active/idle state.
@@ -365,7 +365,7 @@ async def test_set_sysctl(app, model, jujutools, sysctls):
         '/etc/sysctl.d/90-charm-sysconfig.conf', app.units[0]
     )
     assert re.search(
-        '^net.ipv4.ip_forward={}$'.format(sysctls), content, re.MULTILINE
+        '^net.ipv4.ip_forward={}$'.format(sysctl), content, re.MULTILINE
     )
 
 

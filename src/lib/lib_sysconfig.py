@@ -237,9 +237,9 @@ class SysConfigHelper:
         return self.charm_config['resolved-cache-mode']
 
     @property
-    def sysctls(self):
-        """Return sysctls config option."""
-        return self.charm_config['sysctls']
+    def sysctl_config(self):
+        """Return sysctl config option."""
+        return self.charm_config['sysctl']
 
     @property
     def sysctl_file(self):
@@ -355,7 +355,7 @@ class SysConfigHelper:
         hookenv.log('systemd-resolved configuration updated')
 
     def update_sysctl(self):
-        sysctl.create(self.sysctls or {}, self.sysctl_file)
+        sysctl.create(self.sysctl_config or {}, self.sysctl_file)
         hookenv.log('sysctl updated')
 
     def install_configured_kernel(self):
@@ -364,8 +364,10 @@ class SysConfigHelper:
         Will install kernel and matching modules-extra package
         """
         if not self.kernel_version or self._is_kernel_already_running():
-            hookenv.log('kernel running already to the required version',
-                        hookenv.DEBUG)
+            hookenv.log(
+                'Kernel is already running the required version',
+                hookenv.DEBUG
+            )
             return
 
         configured = self.kernel_version

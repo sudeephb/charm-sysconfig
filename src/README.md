@@ -66,8 +66,9 @@ where all auto-detected arrays are assembled as partitionable.
 
 ## Sysctl
 
-It controls updating a file `/etc/sysctl.d/90-charm-sysconfig.conf` then
-restarting the sysctl service.
+sysctl has the ability to modify kernel parameters at runtime. 
+This charm controls updating a file `/etc/sysctl.d/90-charm-sysconfig.conf` 
+then applying that config using `sysctl -p <this file>`
 
 ## Enable Pti
 

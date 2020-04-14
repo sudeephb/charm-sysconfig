@@ -20,7 +20,7 @@ maintainer: BootStack Charmers <bootstack-charmers@lists.canonical.com>
 description: |
   SYSConfig can configure cpufreq governor (ie powersave, performance),
   and CPU Affinity or Kernel's isolcpus details in systemd-sytem.conf
-  or Grub. It can also configure HugePages on Grub and sysctl.
+  or Grub. It can also configure HugePages on Grub and sysctl settings.
 tags:
   - cpu
   - memory

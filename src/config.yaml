@@ -128,7 +128,7 @@ options:
     description: |
         Sets the "Cache" configuration value in /etc/systemd/resolved.conf.  Valid
         values are '' (system default), 'yes', 'no', and 'no-negative'.
-  sysctls:
+  sysctl:
     type: string
     default: ""
     description: |

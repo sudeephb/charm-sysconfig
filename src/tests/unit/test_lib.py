@@ -575,7 +575,7 @@ class TestLib:
     @mock.patch("lib_sysconfig.hookenv.config")
     @mock.patch("charmhelpers.core.sysctl.check_call")
     def test_update_sysctl(self, check_call, config):
-        config.return_value = {"sysctls": """---
+        config.return_value = {"sysctl": """---
 net.ipv4.ip_forward: 1
 vm.swappiness: 60"""}
         sysh = lib_sysconfig.SysConfigHelper()
