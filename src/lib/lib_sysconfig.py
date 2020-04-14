@@ -5,6 +5,9 @@ Manage grub, systemd, coufrequtils and kernel version configuration.
 import hashlib
 import os
 import subprocess
+import base64
+import binascii
+import yaml
 from datetime import datetime, timedelta, timezone
 
 from charmhelpers.contrib.openstack.utils import config_flags_parser
@@ -238,8 +241,31 @@ class SysConfigHelper:
 
     @property
     def sysctl_config(self):
+        raw_b64 = self.charm_config['sysctl']
+        if not raw_b64:
+            return None
+
         """Return sysctl config option."""
-        return self.charm_config['sysctl']
+        try:
+            raw_str = base64.b64decode(raw_b64)
+        except binascii.Error:
+            err_msg = "sysctl config isn't base64 encoded"
+            hookenv.status_set('blocked', err_msg)
+            hookenv.log("%s: %s" % (err_msg, raw_b64), level=hookenv.ERROR)
+            raise
+
+        try:
+            parsed = yaml.safe_load(raw_str)
+        except yaml.YAMLError:
+            err_msg = "Error parsing sysctl YAML"
+            hookenv.status_set('blocked', err_msg)
+            hookenv.log(
+                "%s: %s" % (err_msg, raw_str.decode('utf-8')),
+                level=hookenv.ERROR
+            )
+            raise
+
+        return parsed
 
     @property
     def sysctl_file(self):

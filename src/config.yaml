@@ -132,6 +132,6 @@ options:
     type: string
     default: ""
     description: |
-      YAML-formatted string of sysctl options eg:
+      Base64 YAML-formatted string of sysctl options eg:
       "---
       kernel.max_pid: 1337"

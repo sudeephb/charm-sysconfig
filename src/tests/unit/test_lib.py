@@ -3,6 +3,7 @@
 import subprocess
 from datetime import datetime, timedelta, timezone
 from tempfile import NamedTemporaryFile
+import base64
 
 import lib_sysconfig
 
@@ -575,9 +576,9 @@ class TestLib:
     @mock.patch("lib_sysconfig.hookenv.config")
     @mock.patch("charmhelpers.core.sysctl.check_call")
     def test_update_sysctl(self, check_call, config):
-        config.return_value = {"sysctl": """---
+        config.return_value = {"sysctl": base64.b64encode("""
 net.ipv4.ip_forward: 1
-vm.swappiness: 60"""}
+vm.swappiness: 60""".encode('utf-8'))}
         sysh = lib_sysconfig.SysConfigHelper()
         with mock.patch("builtins.open", mock.mock_open()) as mock_file:
             sysh.update_sysctl()
@@ -591,3 +592,31 @@ vm.swappiness: 60"""}
         check_call.assert_called_with([
             'sysctl', '-p', sysh.sysctl_file
         ])
+
+    @mock.patch("lib_sysconfig.hookenv")
+    def test_update_sysctl_invalid_b64(self, hookenv):
+        hookenv.config.return_value = {"sysctl": "---invalid"}
+        sysh = lib_sysconfig.SysConfigHelper()
+        with pytest.raises(Exception) as ie:
+            sysh.update_sysctl()
+        hookenv.log.assert_called_once_with(
+            "sysctl config isn't base64 encoded: ---invalid",
+            level=hookenv.ERROR
+        )
+        hookenv.status_set.assert_called_once_with(
+            "blocked", "sysctl config isn't base64 encoded"
+        )
+
+    @mock.patch("lib_sysconfig.hookenv")
+    def test_update_sysctl_invalid_yaml(self, hookenv):
+        hookenv.config.return_value = {"sysctl": "e2ludmFsaWQ="}
+        sysh = lib_sysconfig.SysConfigHelper()
+        with pytest.raises(Exception) as ie:
+            sysh.update_sysctl()
+        hookenv.log.assert_called_once_with(
+            "Error parsing sysctl YAML: {invalid",
+            level=hookenv.ERROR
+        )
+        hookenv.status_set.assert_called_once_with(
+            "blocked", "Error parsing sysctl YAML"
+        )
