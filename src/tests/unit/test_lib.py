@@ -118,17 +118,15 @@ class TestLib:
         assert isinstance(sysconfig.charm_config, dict)
 
     @mock.patch("lib_sysconfig.subprocess.call")
-    @mock.patch("lib_sysconfig.host.get_distrib_codename")
     @mock.patch("lib_sysconfig.hookenv.config")
     @mock.patch("lib_sysconfig.host.service_restart")
     @mock.patch("lib_sysconfig.render")
-    def test_update_cpufreq(self, render, restart, config, codename, check_call):
+    def test_update_cpufreq(self, render, restart, config, check_call):
         """Set config governor=performance.
 
         Expect /etc/default/cpufrequtils is rendered
         and ondemand init script removed
         """
-        codename.return_value = "xenial"
         expected = {"governor": "performance"}
         config.return_value = expected
         sysh = lib_sysconfig.SysConfigHelper()
@@ -144,17 +142,15 @@ class TestLib:
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     @mock.patch("lib_sysconfig.subprocess.call")
-    @mock.patch("lib_sysconfig.host.get_distrib_codename")
     @mock.patch("lib_sysconfig.hookenv.config")
     @mock.patch("lib_sysconfig.host.service_restart")
     @mock.patch("lib_sysconfig.render")
-    def test_update_cpufreq_governor_default(self, render, restart, config, codename, check_call):
+    def test_update_cpufreq_governor_default(self, render, restart, config, check_call):
         """Set config governor=''.
 
         Expect /etc/default/cpufrequtils is rendered with no governor
         and ondemand init script is installed
         """
-        codename.return_value = "xenial"
         expected = {"governor": ""}
         config.return_value = expected
         sysh = lib_sysconfig.SysConfigHelper()
@@ -171,16 +167,14 @@ class TestLib:
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     @mock.patch("lib_sysconfig.subprocess.call")
-    @mock.patch("lib_sysconfig.host.get_distrib_codename")
     @mock.patch("lib_sysconfig.hookenv.config")
     @mock.patch("lib_sysconfig.host.service_restart")
     @mock.patch("lib_sysconfig.render")
-    def test_update_cpufreq_governor_not_available(self, render, restart, config, codename, check_call):
+    def test_update_cpufreq_governor_not_available(self, render, restart, config, check_call):
         """Set wrong governor.
 
         Expect /etc/default/cpufrequtils is not rendered
         """
-        codename.return_value = "xenial"
         expected = {"governor": "wrong"}
         config.return_value = expected
         sysh = lib_sysconfig.SysConfigHelper()
@@ -497,14 +491,12 @@ class TestLib:
     @mock.patch("lib_sysconfig.render")
     @mock.patch("lib_sysconfig.host.service_restart")
     @mock.patch("lib_sysconfig.subprocess.call")
-    @mock.patch("lib_sysconfig.host.get_distrib_codename")
     @mock.patch("lib_sysconfig.hookenv.log")
-    def test_remove_cpufreq_configuration_xenial(self, log, distrib_codename, check_call, restart, render, config):
+    def test_remove_cpufreq_configuration_xenial(self, log, check_call, restart, render, config):
         """Test remove cpufrequtlis configuration.
 
         Expect config is rendered with empty context.
         """
-        distrib_codename.return_value = "xenial"
         sysh = lib_sysconfig.SysConfigHelper()
         sysh.remove_cpufreq_configuration()
 
