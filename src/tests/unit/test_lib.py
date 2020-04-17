@@ -1,13 +1,12 @@
 #!/usr/bin/python3
 """Unit tests for SysConfigHelper and BootResourceState classes."""
+import base64
 import subprocess
+import unittest.mock as mock
 from datetime import datetime, timedelta, timezone
 from tempfile import NamedTemporaryFile
-import base64
 
 import lib_sysconfig
-
-import mock
 
 import pytest
 
@@ -576,28 +575,30 @@ class TestLib:
     @mock.patch("lib_sysconfig.hookenv.config")
     @mock.patch("charmhelpers.core.sysctl.check_call")
     def test_update_sysctl(self, check_call, config):
+        """Test updating sysctl config."""
         config.return_value = {"sysctl": base64.b64encode("""
-net.ipv4.ip_forward: 1
-vm.swappiness: 60""".encode('utf-8'))}
+            net.ipv4.ip_forward: 1
+            vm.swappiness: 60""".encode('utf-8'))}
         sysh = lib_sysconfig.SysConfigHelper()
         with mock.patch("builtins.open", mock.mock_open()) as mock_file:
             sysh.update_sysctl()
 
-        mock_file.assert_called_with(sysh.sysctl_file, 'w')
+        mock_file.assert_called_with(lib_sysconfig.SYSCTL_CONF, 'w')
         handle = mock_file()
         handle.write.has_calls([
             mock.call('net.ipv4.ip_forward=1\n'),
             mock.call('vm.swappiness=60\n'),
         ])
         check_call.assert_called_with([
-            'sysctl', '-p', sysh.sysctl_file
+            'sysctl', '-p', lib_sysconfig.SYSCTL_CONF
         ])
 
     @mock.patch("lib_sysconfig.hookenv")
     def test_update_sysctl_invalid_b64(self, hookenv):
+        """Test updating sysctl config with invalid data."""
         hookenv.config.return_value = {"sysctl": "---invalid"}
         sysh = lib_sysconfig.SysConfigHelper()
-        with pytest.raises(Exception) as ie:
+        with pytest.raises(Exception):
             sysh.update_sysctl()
         hookenv.log.assert_called_once_with(
             "sysctl config isn't base64 encoded: ---invalid",
@@ -609,9 +610,10 @@ vm.swappiness: 60""".encode('utf-8'))}
 
     @mock.patch("lib_sysconfig.hookenv")
     def test_update_sysctl_invalid_yaml(self, hookenv):
+        """Test updating sysctl config with invalid yaml."""
         hookenv.config.return_value = {"sysctl": "e2ludmFsaWQ="}
         sysh = lib_sysconfig.SysConfigHelper()
-        with pytest.raises(Exception) as ie:
+        with pytest.raises(Exception):
             sysh.update_sysctl()
         hookenv.log.assert_called_once_with(
             "Error parsing sysctl YAML: {invalid",

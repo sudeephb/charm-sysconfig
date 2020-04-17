@@ -1,10 +1,10 @@
 """Functional tests for sysconfig charm."""
 
 import asyncio
+import base64
 import os
 import re
 import subprocess
-import base64
 
 import pytest
 
@@ -18,7 +18,8 @@ charm_build_dir = os.getenv('CHARM_BUILD_DIR', '..').rstrip('/')
 
 series = ['xenial',
           'bionic',
-# Make focal as xfail, since it's not released yet and this enables a forced installation for testing
+          # Make focal as xfail, since it's not released yet and this enables
+          # a forced installation for testing
           pytest.param('focal', marks=pytest.mark.xfail(reason='pending_release')),
           ]
 

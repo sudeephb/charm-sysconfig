@@ -133,5 +133,8 @@ options:
     default: ""
     description: |
       Base64 YAML-formatted string of sysctl options eg:
-      "---
-      kernel.max_pid: 1337"
+      $ cat > sysctl.yaml << EOF
+      ---
+      kernel.max_pid: 1337
+      EOF
+      $ juju config sysconfig sysctl="$(cat sysctl.yaml | base64)"

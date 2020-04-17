@@ -2,21 +2,23 @@
 
 Manage grub, systemd, coufrequtils and kernel version configuration.
 """
+import base64
+import binascii
 import hashlib
 import os
 import subprocess
-import base64
-import binascii
-import yaml
 from datetime import datetime, timedelta, timezone
 
+import charmhelpers.core.sysctl as sysctl
 from charmhelpers.contrib.openstack.utils import config_flags_parser
 from charmhelpers.core import hookenv, host, unitdata
 from charmhelpers.core.templating import render
-import charmhelpers.core.sysctl as sysctl
 from charmhelpers.fetch import apt_install, apt_update
 
 from charms.reactive.helpers import any_file_changed
+
+import yaml
+
 
 GRUB_DEFAULT = 'Advanced options for Ubuntu>Ubuntu, with Linux {}'
 CPUFREQUTILS_TMPL = 'cpufrequtils.j2'
@@ -241,6 +243,7 @@ class SysConfigHelper:
 
     @property
     def sysctl_config(self):
+        """Return sysctl config option."""
         raw_b64 = self.charm_config['sysctl']
         if not raw_b64:
             return None
@@ -266,10 +269,6 @@ class SysConfigHelper:
             raise
 
         return parsed
-
-    @property
-    def sysctl_file(self):
-        return SYSCTL_CONF
 
     @property
     def config_flags(self):
@@ -381,7 +380,8 @@ class SysConfigHelper:
         hookenv.log('systemd-resolved configuration updated')
 
     def update_sysctl(self):
-        sysctl.create(self.sysctl_config or {}, self.sysctl_file)
+        """Update sysctl according to charm configuration."""
+        sysctl.create(self.sysctl_config or {}, SYSCTL_CONF)
         hookenv.log('sysctl updated')
 
     def install_configured_kernel(self):
