@@ -248,7 +248,6 @@ class SysConfigHelper:
         if not raw_b64:
             return None
 
-        """Return sysctl config option."""
         try:
             raw_str = base64.b64decode(raw_b64)
         except binascii.Error:

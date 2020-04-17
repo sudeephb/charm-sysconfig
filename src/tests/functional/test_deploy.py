@@ -16,12 +16,13 @@ pytestmark = pytest.mark.asyncio
 
 charm_build_dir = os.getenv('CHARM_BUILD_DIR', '..').rstrip('/')
 
-series = ['xenial',
-          'bionic',
-          # Make focal as xfail, since it's not released yet and this enables
-          # a forced installation for testing
-          pytest.param('focal', marks=pytest.mark.xfail(reason='pending_release')),
-          ]
+series = [
+    'xenial',
+    'bionic',
+    # Make focal as xfail, since it's not released yet and this enables
+    # a forced installation for testing
+    # pytest.param('focal', marks=pytest.mark.xfail(reason='pending_release')),
+]
 
 sources = [('local', '{}/builds/sysconfig'.format(charm_build_dir))]
 
@@ -351,7 +352,9 @@ async def test_set_sysctl(app, model, jujutools, sysctl):
     await model.block_until(is_model_settled, timeout=TIMEOUT)
 
     await app.set_config({
-        'sysctl': base64.b64encode("---\nnet.ipv4.ip_forward: %s" % sysctl)
+        'sysctl': base64.b64encode(
+            ("net.ipv4.ip_forward: %s" % sysctl).encode('utf-8')
+        ).decode('utf-8')
     })
     # NOTE: app.set_config() doesn't seem to wait for the model to go to a
     # non-active/idle state.
@@ -363,11 +366,10 @@ async def test_set_sysctl(app, model, jujutools, sysctl):
         pass
 
     await model.block_until(is_model_settled, timeout=TIMEOUT)
-    content = await jujutools.file_contents(
-        '/etc/sysctl.d/90-charm-sysconfig.conf', app.units[0]
-    )
+    result = await jujutools.run_command('sysctl -a', app.units[0])
+    content = result['Stdout']
     assert re.search(
-        '^net.ipv4.ip_forward={}$'.format(sysctl), content, re.MULTILINE
+        '^net.ipv4.ip_forward = {}$'.format(sysctl), content, re.MULTILINE
     )
 
 
