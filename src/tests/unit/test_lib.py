@@ -576,9 +576,10 @@ class TestLib:
     @mock.patch("charmhelpers.core.sysctl.check_call")
     def test_update_sysctl(self, check_call, config):
         """Test updating sysctl config."""
-        config.return_value = {"sysctl": base64.b64encode("""
+        config.return_value = {"sysctl": """
             net.ipv4.ip_forward: 1
-            vm.swappiness: 60""".encode('utf-8'))}
+            vm.swappiness: 60"""
+        }
         sysh = lib_sysconfig.SysConfigHelper()
         with mock.patch("builtins.open", mock.mock_open()) as mock_file:
             sysh.update_sysctl()
@@ -594,24 +595,9 @@ class TestLib:
         ])
 
     @mock.patch("lib_sysconfig.hookenv")
-    def test_update_sysctl_invalid_b64(self, hookenv):
-        """Test updating sysctl config with invalid data."""
-        hookenv.config.return_value = {"sysctl": "---invalid"}
-        sysh = lib_sysconfig.SysConfigHelper()
-        with pytest.raises(Exception):
-            sysh.update_sysctl()
-        hookenv.log.assert_called_once_with(
-            "sysctl config isn't base64 encoded: ---invalid",
-            level=hookenv.ERROR
-        )
-        hookenv.status_set.assert_called_once_with(
-            "blocked", "sysctl config isn't base64 encoded"
-        )
-
-    @mock.patch("lib_sysconfig.hookenv")
     def test_update_sysctl_invalid_yaml(self, hookenv):
         """Test updating sysctl config with invalid yaml."""
-        hookenv.config.return_value = {"sysctl": "e2ludmFsaWQ="}
+        hookenv.config.return_value = {"sysctl": "{invalid"}
         sysh = lib_sysconfig.SysConfigHelper()
         with pytest.raises(Exception):
             sysh.update_sysctl()

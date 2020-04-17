@@ -244,17 +244,7 @@ class SysConfigHelper:
     @property
     def sysctl_config(self):
         """Return sysctl config option."""
-        raw_b64 = self.charm_config['sysctl']
-        if not raw_b64:
-            return None
-
-        try:
-            raw_str = base64.b64decode(raw_b64)
-        except binascii.Error:
-            err_msg = "sysctl config isn't base64 encoded"
-            hookenv.status_set('blocked', err_msg)
-            hookenv.log("%s: %s" % (err_msg, raw_b64), level=hookenv.ERROR)
-            raise
+        raw_str = self.charm_config['sysctl']
 
         try:
             parsed = yaml.safe_load(raw_str)
@@ -262,7 +252,7 @@ class SysConfigHelper:
             err_msg = "Error parsing sysctl YAML"
             hookenv.status_set('blocked', err_msg)
             hookenv.log(
-                "%s: %s" % (err_msg, raw_str.decode('utf-8')),
+                "%s: %s" % (err_msg, raw_str),
                 level=hookenv.ERROR
             )
             raise

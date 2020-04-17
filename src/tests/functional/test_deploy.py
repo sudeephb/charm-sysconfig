@@ -1,7 +1,6 @@
 """Functional tests for sysconfig charm."""
 
 import asyncio
-import base64
 import os
 import re
 import subprocess
@@ -352,9 +351,7 @@ async def test_set_sysctl(app, model, jujutools, sysctl):
     await model.block_until(is_model_settled, timeout=TIMEOUT)
 
     await app.set_config({
-        'sysctl': base64.b64encode(
-            ("net.ipv4.ip_forward: %s" % sysctl).encode('utf-8')
-        ).decode('utf-8')
+        'sysctl': "net.ipv4.ip_forward: %s" % sysctl
     })
     # NOTE: app.set_config() doesn't seem to wait for the model to go to a
     # non-active/idle state.
