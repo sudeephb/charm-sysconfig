@@ -131,7 +131,7 @@ options:
   sysctl:
     type: string
     default: ""
-    description: >
+    description: |
       YAML-formatted associative array of sysctl key/value pairs to be set
       persistently.
 
