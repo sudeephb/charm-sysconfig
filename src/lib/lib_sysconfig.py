@@ -367,7 +367,7 @@ class SysConfigHelper:
         self._render_boot_resource(CPUFREQUTILS_TMPL, CPUFREQUTILS, context)
         # Ensure the ondemand service is disabled if governor is set, lp#1822774, lp#1863659, lp#740127
         # Ondemand service is not updated during test if host is container.
-        if host.get_distrib_codename() == 'xenial' and not host.is_container():
+        if not host.is_container():
             hookenv.log('disabling the ondemand services for lp#1822774, lp#1863659,'
                         ' and lp#740127 if a governor is specified', hookenv.DEBUG)
             if self.governor:
@@ -431,7 +431,7 @@ class SysConfigHelper:
         Will render cpufrequtils config with empty context.
         """
         context = {}
-        if host.get_distrib_codename() == 'xenial' and not host.is_container():
+        if not host.is_container():
             hookenv.log('Enabling the ondemand initscript for lp#1822774'
                         ' and lp#740127', 'DEBUG')
             subprocess.call(
