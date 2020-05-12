@@ -7,12 +7,16 @@ import os
 import subprocess
 from datetime import datetime, timedelta, timezone
 
+import charmhelpers.core.sysctl as sysctl
 from charmhelpers.contrib.openstack.utils import config_flags_parser
 from charmhelpers.core import hookenv, host, unitdata
 from charmhelpers.core.templating import render
 from charmhelpers.fetch import apt_install, apt_update
 
 from charms.reactive.helpers import any_file_changed
+
+import yaml
+
 
 GRUB_DEFAULT = 'Advanced options for Ubuntu>Ubuntu, with Linux {}'
 CPUFREQUTILS_TMPL = 'cpufrequtils.j2'
@@ -24,6 +28,7 @@ CPUFREQUTILS = '/etc/default/cpufrequtils'
 GRUB_CONF = '/etc/default/grub.d/90-sysconfig.cfg'
 SYSTEMD_SYSTEM = '/etc/systemd/system.conf'
 SYSTEMD_RESOLVED = '/etc/systemd/resolved.conf'
+SYSCTL_CONF = '/etc/sysctl.d/90-charm-sysconfig.conf'
 KERNEL = 'kernel'
 
 
@@ -235,6 +240,24 @@ class SysConfigHelper:
         return self.charm_config['resolved-cache-mode']
 
     @property
+    def sysctl_config(self):
+        """Return sysctl config option."""
+        raw_str = self.charm_config['sysctl']
+
+        try:
+            parsed = yaml.safe_load(raw_str)
+        except yaml.YAMLError:
+            err_msg = "Error parsing sysctl YAML"
+            hookenv.status_set('blocked', err_msg)
+            hookenv.log(
+                "%s: %s" % (err_msg, raw_str),
+                level=hookenv.ERROR
+            )
+            raise
+
+        return parsed
+
+    @property
     def config_flags(self):
         """Return parsed config-flags into dict.
 
@@ -343,13 +366,21 @@ class SysConfigHelper:
         self._update_systemd_resolved(context)
         hookenv.log('systemd-resolved configuration updated')
 
+    def update_sysctl(self):
+        """Update sysctl according to charm configuration."""
+        sysctl.create(self.sysctl_config or {}, SYSCTL_CONF)
+        hookenv.log('sysctl updated')
+
     def install_configured_kernel(self):
         """Install kernel as given by the kernel-version config option.
 
         Will install kernel and matching modules-extra package
         """
         if not self.kernel_version or self._is_kernel_already_running():
-            hookenv.log('kernel running already to the reuired version', hookenv.DEBUG)
+            hookenv.log(
+                'Kernel is already running the required version',
+                hookenv.DEBUG
+            )
             return
 
         configured = self.kernel_version
@@ -394,7 +425,7 @@ class SysConfigHelper:
             return
         os.remove(grub_configuration_path)
         hookenv.log(
-            'deleted grub configuration at '.format(grub_configuration_path),
+            'deleted grub configuration at {}'.format(grub_configuration_path),
             hookenv.DEBUG
         )
         self._update_grub()
@@ -408,7 +439,7 @@ class SysConfigHelper:
         context = {}
         self._render_boot_resource(SYSTEMD_SYSTEM_TMPL, SYSTEMD_SYSTEM, context)
         hookenv.log(
-            'deleted systemd configuration at '.format(SYSTEMD_SYSTEM),
+            'deleted systemd configuration at {}'.format(SYSTEMD_SYSTEM),
             hookenv.DEBUG
         )
 
@@ -418,7 +449,10 @@ class SysConfigHelper:
         Will render resolved config with defaults.
         """
         self._update_systemd_resolved({})
-        hookenv.log('deleted resolved configuration at '.format(SYSTEMD_RESOLVED), hookenv.DEBUG)
+        hookenv.log(
+            'deleted resolved configuration at {}'.format(SYSTEMD_RESOLVED),
+            hookenv.DEBUG
+        )
 
     def _update_systemd_resolved(self, context):
         self._render_resource(SYSTEMD_RESOLVED_TMPL, SYSTEMD_RESOLVED, context)
@@ -441,7 +475,7 @@ class SysConfigHelper:
 
         self._render_boot_resource(CPUFREQUTILS_TMPL, CPUFREQUTILS, context)
         hookenv.log(
-            'deleted cpufreq configuration at '.format(CPUFREQUTILS),
+            'deleted cpufreq configuration at {}'.format(CPUFREQUTILS),
             hookenv.DEBUG
         )
         host.service_restart('cpufrequtils')

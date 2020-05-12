@@ -128,3 +128,11 @@ options:
     description: |
         Sets the "Cache" configuration value in /etc/systemd/resolved.conf.  Valid
         values are '' (system default), 'yes', 'no', and 'no-negative'.
+  sysctl:
+    type: string
+    default: ""
+    description: |
+      YAML-formatted associative array of sysctl key/value pairs to be set
+      persistently.
+
+      eg. { kernel.max_pid: 1337, net.ipv4.ip_forward: 0 }

@@ -15,11 +15,13 @@ pytestmark = pytest.mark.asyncio
 
 charm_build_dir = os.getenv('CHARM_BUILD_DIR', '..').rstrip('/')
 
-series = ['xenial',
-          'bionic',
-# Make focal as xfail, since it's not released yet and this enables a forced installation for testing
-          pytest.param('focal', marks=pytest.mark.xfail(reason='pending_release')),
-          ]
+series = [
+    'xenial',
+    'bionic',
+    # Make focal as xfail, since it's not released yet and this enables
+    # a forced installation for testing
+    # pytest.param('focal', marks=pytest.mark.xfail(reason='pending_release')),
+]
 
 sources = [('local', '{}/builds/sysconfig'.format(charm_build_dir))]
 
@@ -338,6 +340,34 @@ async def test_set_resolved_cache(app, model, jujutools, cache_setting):
 
     resolved_conf_content = await jujutools.file_contents('/etc/systemd/resolved.conf', app.units[0])
     assert re.search('^Cache={}$'.format(cache_setting), resolved_conf_content, re.MULTILINE)
+
+
+@pytest.mark.parametrize('sysctl', ['1', '0'])
+async def test_set_sysctl(app, model, jujutools, sysctl):
+    """Tests sysctl settings."""
+    def is_model_settled():
+        return app.units[0].workload_status == 'active' and app.units[0].agent_status == 'idle'
+
+    await model.block_until(is_model_settled, timeout=TIMEOUT)
+
+    await app.set_config({
+        'sysctl': "net.ipv4.ip_forward: %s" % sysctl
+    })
+    # NOTE: app.set_config() doesn't seem to wait for the model to go to a
+    # non-active/idle state.
+    try:
+        await model.block_until(lambda: not is_model_settled(), timeout=MODEL_ACTIVE_TIMEOUT)
+    except websockets.ConnectionClosed:
+        # It's possible (although unlikely) that we missed the charm transitioning from
+        # idle to active and back.
+        pass
+
+    await model.block_until(is_model_settled, timeout=TIMEOUT)
+    result = await jujutools.run_command('sysctl -a', app.units[0])
+    content = result['Stdout']
+    assert re.search(
+        '^net.ipv4.ip_forward = {}$'.format(sysctl), content, re.MULTILINE
+    )
 
 
 async def test_uninstall(app, model, jujutools, series):

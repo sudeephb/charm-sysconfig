@@ -1,12 +1,11 @@
 #!/usr/bin/python3
 """Unit tests for SysConfigHelper and BootResourceState classes."""
 import subprocess
+import unittest.mock as mock
 from datetime import datetime, timedelta, timezone
 from tempfile import NamedTemporaryFile
 
 import lib_sysconfig
-
-import mock
 
 import pytest
 
@@ -570,4 +569,42 @@ class TestLib:
             target=lib_sysconfig.SYSTEMD_RESOLVED,
             templates_dir="templates",
             context={"cache": "no-negative"},
+        )
+
+    @mock.patch("lib_sysconfig.hookenv.config")
+    @mock.patch("charmhelpers.core.sysctl.check_call")
+    def test_update_sysctl(self, check_call, config):
+        """Test updating sysctl config."""
+        config.return_value = {
+            "sysctl": """
+            net.ipv4.ip_forward: 1
+            vm.swappiness: 60"""
+        }
+        sysh = lib_sysconfig.SysConfigHelper()
+        with mock.patch("builtins.open", mock.mock_open()) as mock_file:
+            sysh.update_sysctl()
+
+        mock_file.assert_called_with(lib_sysconfig.SYSCTL_CONF, 'w')
+        handle = mock_file()
+        handle.write.has_calls([
+            mock.call('net.ipv4.ip_forward=1\n'),
+            mock.call('vm.swappiness=60\n'),
+        ])
+        check_call.assert_called_with([
+            'sysctl', '-p', lib_sysconfig.SYSCTL_CONF
+        ])
+
+    @mock.patch("lib_sysconfig.hookenv")
+    def test_update_sysctl_invalid_yaml(self, hookenv):
+        """Test updating sysctl config with invalid yaml."""
+        hookenv.config.return_value = {"sysctl": "{invalid"}
+        sysh = lib_sysconfig.SysConfigHelper()
+        with pytest.raises(Exception):
+            sysh.update_sysctl()
+        hookenv.log.assert_called_once_with(
+            "Error parsing sysctl YAML: {invalid",
+            level=hookenv.ERROR
+        )
+        hookenv.status_set.assert_called_once_with(
+            "blocked", "Error parsing sysctl YAML"
         )

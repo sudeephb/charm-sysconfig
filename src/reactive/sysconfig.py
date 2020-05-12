@@ -111,6 +111,9 @@ def config_changed():
     )) or helpers.any_file_changed([SYSTEMD_RESOLVED]):
         syshelper.update_systemd_resolved()
 
+    if syshelper.charm_config.changed('sysctl'):
+        syshelper.update_sysctl()
+
     update_status()
 
 

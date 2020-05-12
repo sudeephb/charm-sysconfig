@@ -64,6 +64,12 @@ autodetection is enabled if 'md' module is compiled into the kernel. Possibles
 values will be "noautodetect" that disables raid autodetection and "partitionable"
 where all auto-detected arrays are assembled as partitionable.
 
+## Sysctl
+
+sysctl has the ability to modify kernel parameters at runtime. 
+This charm controls updating a file `/etc/sysctl.d/90-charm-sysconfig.conf` 
+then applying that config using `sysctl -p <this file>`
+
 ## Enable Pti
 
 By default Page Table Isolation is disabled passing "pti=off" to the grub cmdline.
