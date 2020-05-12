@@ -2,8 +2,6 @@
 
 Manage grub, systemd, coufrequtils and kernel version configuration.
 """
-import base64
-import binascii
 import hashlib
 import os
 import subprocess
@@ -427,7 +425,7 @@ class SysConfigHelper:
             return
         os.remove(grub_configuration_path)
         hookenv.log(
-            'deleted grub configuration at '.format(grub_configuration_path),
+            'deleted grub configuration at {}'.format(grub_configuration_path),
             hookenv.DEBUG
         )
         self._update_grub()
@@ -441,7 +439,7 @@ class SysConfigHelper:
         context = {}
         self._render_boot_resource(SYSTEMD_SYSTEM_TMPL, SYSTEMD_SYSTEM, context)
         hookenv.log(
-            'deleted systemd configuration at '.format(SYSTEMD_SYSTEM),
+            'deleted systemd configuration at {}'.format(SYSTEMD_SYSTEM),
             hookenv.DEBUG
         )
 
@@ -451,7 +449,10 @@ class SysConfigHelper:
         Will render resolved config with defaults.
         """
         self._update_systemd_resolved({})
-        hookenv.log('deleted resolved configuration at '.format(SYSTEMD_RESOLVED), hookenv.DEBUG)
+        hookenv.log(
+            'deleted resolved configuration at {}'.format(SYSTEMD_RESOLVED),
+            hookenv.DEBUG
+        )
 
     def _update_systemd_resolved(self, context):
         self._render_resource(SYSTEMD_RESOLVED_TMPL, SYSTEMD_RESOLVED, context)
@@ -474,7 +475,7 @@ class SysConfigHelper:
 
         self._render_boot_resource(CPUFREQUTILS_TMPL, CPUFREQUTILS, context)
         hookenv.log(
-            'deleted cpufreq configuration at '.format(CPUFREQUTILS),
+            'deleted cpufreq configuration at {}'.format(CPUFREQUTILS),
             hookenv.DEBUG
         )
         host.service_restart('cpufrequtils')

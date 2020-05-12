@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 """Unit tests for SysConfigHelper and BootResourceState classes."""
-import base64
 import subprocess
 import unittest.mock as mock
 from datetime import datetime, timedelta, timezone
@@ -576,7 +575,8 @@ class TestLib:
     @mock.patch("charmhelpers.core.sysctl.check_call")
     def test_update_sysctl(self, check_call, config):
         """Test updating sysctl config."""
-        config.return_value = {"sysctl": """
+        config.return_value = {
+            "sysctl": """
             net.ipv4.ip_forward: 1
             vm.swappiness: 60"""
         }
