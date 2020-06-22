@@ -176,12 +176,27 @@ class SysConfigHelper:
 
     @property
     def reservation(self):
-        """Return reservation config."""
+        """Return reservation config.
+
+        [DEPRECATED]: this option should no longer be used.
+        Instead cpu-affinity-range and isolcpus should be used.
+        """
         return self.charm_config['reservation']
 
     @property
+    def cpu_affinity_range(self):
+        """Return cpu-affinity-range config."""
+        if self.reservation == "affinity" and self.cpu_range:
+            return self.cpu_range
+        return self.charm_config['cpu-affinity-range']
+
+    @property
     def cpu_range(self):
-        """Return cpu-range config."""
+        """Return cpu-range config.
+
+        [DEPRECATED]: this option should no longer be used.
+        Instead cpu-affinity-range and isolcpus should be used.
+        """
         return self.charm_config['cpu-range']
 
     @property
@@ -193,6 +208,13 @@ class SysConfigHelper:
     def hugepagesz(self):
         """Return hugepagesz config."""
         return self.charm_config['hugepagesz']
+
+    @property
+    def isolcpus(self):
+        """Return isolcpus config."""
+        if self.reservation == "isolcpus" and self.cpu_range:
+            return self.cpu_range
+        return self.charm_config['isolcpus']
 
     @property
     def raid_autodetection(self):
@@ -315,8 +337,17 @@ class SysConfigHelper:
         Will call update-grub if update-grub config is set to True.
         """
         context = {}
-        if self.reservation == 'isolcpus':
-            context['cpu_range'] = self.cpu_range
+
+        # The isolcpus boot option can be used to isolate one or more CPUs at
+        # boot time, so that no processes are scheduled onto those CPUs.
+        # Following the use of this boot option, the only way to schedule
+        # processes onto the isolated CPUs is via sched_setaffinity() or the
+        # cpuset(7) mechanism.
+
+        # This is to keep the old method of specifying the isolcpus
+        # by specifying the reservation and the cpu_range
+        if self.isolcpus:
+            context['isolcpus'] = self.isolcpus
         if self.hugepages:
             context['hugepages'] = self.hugepages
         if self.hugepagesz:
@@ -345,8 +376,8 @@ class SysConfigHelper:
     def update_systemd_system_file(self):
         """Update /etc/systemd/system.conf according to charm configuration."""
         context = {}
-        if self.reservation == 'affinity':
-            context['cpu_range'] = self.cpu_range
+        if self.cpu_affinity_range:
+            context['cpu_affinity_range'] = self.cpu_affinity_range
 
         # Note(peppepetra): First check if new systemd-config-flags is used
         # if not try to fallback into legacy config-flags
