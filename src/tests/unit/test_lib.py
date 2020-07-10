@@ -192,6 +192,48 @@ class TestLib:
         Expect file is rendered with correct config and updated-grub is called.
         """
         config.return_value = {
+            "reservation": "off",
+            "isolcpus": "0-10",
+            "hugepages": "400",
+            "hugepagesz": "1G",
+            "raid-autodetection": "noautodetect",
+            "enable-pti": True,
+            "enable-iommu": True,
+            "grub-config-flags": "TEST_KEY=\"TEST VALUE, WITH COMMA\", GRUB_TIMEOUT=0",
+            "kernel-version": "4.15.0-38-generic",
+            "update-grub": True
+        }
+
+        expected = {
+            "isolcpus": "0-10",
+            "hugepages": "400",
+            "hugepagesz": "1G",
+            "raid": "noautodetect",
+            "iommu": True,
+            "grub_config_flags": {"GRUB_TIMEOUT": "0", "TEST_KEY": "\"TEST VALUE, WITH COMMA\""},
+            "grub_default": "Advanced options for Ubuntu>Ubuntu, with Linux 4.15.0-38-generic"
+        }
+
+        sysh = lib_sysconfig.SysConfigHelper()
+        sysh.update_grub_file()
+        render.assert_called_with(
+            source=lib_sysconfig.GRUB_CONF_TMPL,
+            target=lib_sysconfig.GRUB_CONF,
+            templates_dir="templates",
+            context=expected,
+        )
+        check_call.assert_called()
+
+    @mock.patch("lib_sysconfig.subprocess.check_call")
+    @mock.patch("lib_sysconfig.hookenv.config")
+    @mock.patch("lib_sysconfig.hookenv.log")
+    @mock.patch("lib_sysconfig.render")
+    def test_grub_legacy_reservation(self, render, log, config, check_call):
+        """Update /etc/default/grub.d/90-sysconfig.cfg and update-grub true.
+
+        Expect file is rendered with correct config and updated-grub is called.
+        """
+        config.return_value = {
             "reservation": "isolcpus",
             "cpu-range": "0-10",
             "hugepages": "400",
@@ -205,7 +247,7 @@ class TestLib:
         }
 
         expected = {
-            "cpu_range": "0-10",
+            "isolcpus": "0-10",
             "hugepages": "400",
             "hugepagesz": "1G",
             "raid": "noautodetect",
@@ -234,7 +276,8 @@ class TestLib:
         Expect file is rendered with correct config and updated-grub is called.
         """
         config.return_value = {
-            "reservation": "",
+            "reservation": "off",
+            "isolcpus": "",
             "hugepages": "",
             "hugepagesz": "",
             "raid-autodetection": "",
@@ -270,8 +313,8 @@ class TestLib:
         Expect file is rendered with correct config and updated-grub is not called.
         """
         config.return_value = {
-            "reservation": "isolcpus",
-            "cpu-range": "0-10",
+            "reservation": "off",
+            "isolcpus": "0-10",
             "hugepages": "400",
             "hugepagesz": "1G",
             "raid-autodetection": "noautodetect",
@@ -283,7 +326,7 @@ class TestLib:
         }
 
         expected = {
-            "cpu_range": "0-10",
+            "isolcpus": "0-10",
             "hugepages": "400",
             "hugepagesz": "1G",
             "raid": "noautodetect",
@@ -312,13 +355,44 @@ class TestLib:
         Expect file is rendered with correct config and updated-grub is not called.
         """
         config.return_value = {
+            "reservation": "off",
+            "cpu-affinity-range": "0-10",
+            "systemd-config-flags": "DefaultLimitRTTIME=1,DefaultTasksMax=10"
+        }
+
+        expected = {
+            "cpu_affinity_range": "0-10",
+            "systemd_config_flags": {
+                "DefaultLimitRTTIME": "1",
+                "DefaultTasksMax": "10"
+            }
+        }
+
+        sysh = lib_sysconfig.SysConfigHelper()
+        sysh.update_systemd_system_file()
+        render.assert_called_with(
+            source=lib_sysconfig.SYSTEMD_SYSTEM_TMPL,
+            target=lib_sysconfig.SYSTEMD_SYSTEM,
+            templates_dir="templates",
+            context=expected,
+        )
+
+    @mock.patch("lib_sysconfig.hookenv.config")
+    @mock.patch("lib_sysconfig.hookenv.log")
+    @mock.patch("lib_sysconfig.render")
+    def test_update_systemd_system_legacy_reservation(self, render, log, config):
+        """Update /etc/default/grub.d/90-sysconfig.cfg and update-grub false.
+
+        Expect file is rendered with correct config and updated-grub is not called.
+        """
+        config.return_value = {
             "reservation": "affinity",
             "cpu-range": "0-10",
             "systemd-config-flags": "DefaultLimitRTTIME=1,DefaultTasksMax=10"
         }
 
         expected = {
-            "cpu_range": "0-10",
+            "cpu_affinity_range": "0-10",
             "systemd_config_flags": {
                 "DefaultLimitRTTIME": "1",
                 "DefaultTasksMax": "10"
@@ -343,14 +417,14 @@ class TestLib:
         Expect file is rendered with correct config and updated-grub is not called.
         """
         config.return_value = {
-            "reservation": "affinity",
-            "cpu-range": "0-10",
+            "reservation": "off",
+            "cpu-affinity-range": "0-10",
             "config-flags": "{'systemd': 'DefaultLimitRTTIME=1, DefaultTasksMax=10'}",
             "systemd-config-flags": ""
         }
 
         expected = {
-            "cpu_range": "0-10",
+            "cpu_affinity_range": "0-10",
             "systemd_config_flags": {
                 "DefaultLimitRTTIME": "1",
                 "DefaultTasksMax": "10"

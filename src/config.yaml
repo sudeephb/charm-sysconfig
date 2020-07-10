@@ -30,6 +30,17 @@ options:
         affinity (CPU Affinity) is a systemd configuration parameter.
         Other processes inherit from systemd-system.conf
         off (default) disables any CPU reservation on host-side.
+
+        [DEPRECATED]: this option should no longer be used.
+        Instead isolcpus and cpu-affinity-range should be used.
+  cpu-affinity-range:
+    type: string
+    default: ""
+    description: |
+        Single pcpus (0,1,2) or range of pcpus (0-10)
+
+        This will update /etc/systemd.conf and update the CPUAffinity
+        variable with the option here
   cpu-range:
     type: string
     default: ""
@@ -38,6 +49,9 @@ options:
         isolcpus is selected) or reserve (if affinity is selected).
         Default value (empty) will make "reservation" work as if it was
         "off".
+
+        [DEPRECATED]: this option should no longer be used.
+        Instead isolcpus and cpu-affinity-range should be used.
   hugepages:
     type: string
     default: ""
@@ -91,6 +105,14 @@ options:
         to avoid them being overwritten, for example
         grub-config-flags='GRUB_CMDLINE_LINUX_DEFAULT="$GRUB_CMDLINE_LINUX_DEFAULT
         nvme_core.multipath=0'
+  isolcpus:
+    default: ""
+    type: string
+    description:
+        Single pcpus (0,1,2) or range of pcpus (0-10)
+
+        isolcpus is a kernel cmdline parameter, and will append isolcpus to the
+        grub command line with the option given here.
   kernel-version:
     type: string
     default: ""

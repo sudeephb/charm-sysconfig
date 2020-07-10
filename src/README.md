@@ -32,10 +32,19 @@ a container too. This is intended only for testing purpose.
 
 ## Reservation
 
+DEPRECATED in favor of cpu-affinity-range and isolcpus
+
 By default, the charm does not configure any CPU related reservation.
 However, "isolcpus" or "affinity" can be configured on systemd hosts.
 
+## cpu-affinity-range
+
+It determines the pcpus that the host WILL use (ie. a complementary range
+to the QEMU vcpu_pin_set).
+
 ## cpu-range
+
+DEPRECATED in favor of cpu-affinity-range and isolcpus
 
 In case of "isolcpus", it determines the pcpus that won't be used by the
 host (ie. the same range is configured for QEMU usage).
@@ -56,6 +65,11 @@ the grub cmdline.
 It controls the size of each hugepage to be set in the system. By default the
 value is empty, if specified `hugepagesz={{ hugepagesz }}` will be attached to
 the grub cmdline.
+
+## isolcpus
+
+It determines the pcpus that won't be used by the host (ie. the same range is
+configured for QEMU usage).
 
 ## Raid autodetection
 

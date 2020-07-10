@@ -22,8 +22,8 @@
 #CrashShell=no
 #CrashReboot=no
 #CPUAffinity=1 2
-{% if cpu_range is defined and cpu_range -%}
-CPUAffinity={{ cpu_range }}
+{% if cpu_affinity_range is defined and cpu_affinity_range -%}
+CPUAffinity={{ cpu_affinity_range }}
 {% endif -%}
 #JoinControllers=cpu,cpuacct net_cls,net_prio
 #RuntimeWatchdogSec=0

@@ -167,8 +167,7 @@ async def test_config_changed(app, model, jujutools):
 
     await app.set_config(
         {
-            'reservation': 'isolcpus',
-            'cpu-range': '1,2,3,4',
+            'isolcpus': '1,2,3,4',
             'hugepages': '100',
             'hugepagesz': '1G',
             'raid-autodetection': 'noautodetect',
@@ -177,7 +176,7 @@ async def test_config_changed(app, model, jujutools):
             'kernel-version': kernel_version,
             'grub-config-flags': 'GRUB_TIMEOUT=10',
             'config-flags': '{"grub": "TEST=test"}',  # config-flags are ignored when grub-config-flags are used
-            'systemd-config-flags': 'DefaultLimitRTTIME=1,DefaultTasksMax=10',
+            'systemd-config-flags': 'LogLevel=warning,DumpCore=no',
             'governor': 'powersave'
         }
     )
@@ -206,7 +205,8 @@ async def test_config_changed(app, model, jujutools):
 
     await app.set_config(
         {
-            'reservation': 'affinity'
+            'isolcpus': '',
+            'cpu-affinity-range': '1,2,3,4'
         }
     )
 
@@ -221,8 +221,8 @@ async def test_config_changed(app, model, jujutools):
 
     assert 'CPUAffinity=1,2,3,4' in systemd_content
 
-    assert 'DefaultLimitRTTIME=1' in systemd_content
-    assert 'DefaultTasksMax=10' in systemd_content
+    assert 'LogLevel=warning' in systemd_content
+    assert 'DumpCore=no' in systemd_content
 
     grub_content = await jujutools.file_contents(grup_path, unit)
     assert 'isolcpus' not in grub_content
@@ -249,6 +249,8 @@ async def test_clear_notification(app):
     assert action.status == 'completed'
 
 
+# This may need to be removed at some point once the reservation
+# variable gets removed
 async def test_wrong_reservation(app, model):
     """Tests wrong reservation value is used.
 
