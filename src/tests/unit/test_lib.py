@@ -86,8 +86,9 @@ class TestBootResourceState:
         mock_boot_time.return_value = self.datetime - timedelta(1)
         boot_resource = self.boot_resource()
         with NamedTemporaryFile() as ftmp:
-            with mock.patch.object(boot_resource,
-                                   'calculate_resource_sha256sum') as mock_calc:
+            with mock.patch.object(
+                boot_resource, "calculate_resource_sha256sum"
+            ) as mock_calc:
                 mock_calc.return_value = "1234"
                 changed = boot_resource.resources_changed_since_boot([ftmp.name])
                 assert not changed
@@ -98,8 +99,9 @@ class TestBootResourceState:
         mock_boot_time.return_value = self.datetime - timedelta(1)
         boot_resource = self.boot_resource()
         with NamedTemporaryFile() as ftmp:
-            with mock.patch.object(boot_resource,
-                                   'calculate_resource_sha256sum') as mock_calc:
+            with mock.patch.object(
+                boot_resource, "calculate_resource_sha256sum"
+            ) as mock_calc:
                 mock_calc.return_value = "2345"
                 changed = boot_resource.resources_changed_since_boot([ftmp.name])
                 assert changed
@@ -137,8 +139,10 @@ class TestLib:
             context=expected,
         )
         check_call.assert_called_with(
-            ['/bin/systemctl', 'mask', 'ondemand'],
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            ["/bin/systemctl", "mask", "ondemand"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
 
     @mock.patch("lib_sysconfig.subprocess.call")
     @mock.patch("lib_sysconfig.hookenv.config")
@@ -162,14 +166,18 @@ class TestLib:
         )
         restart.assert_called()
         check_call.assert_called_with(
-            ['/bin/systemctl', 'unmask', 'ondemand'],
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            ["/bin/systemctl", "unmask", "ondemand"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
 
     @mock.patch("lib_sysconfig.subprocess.call")
     @mock.patch("lib_sysconfig.hookenv.config")
     @mock.patch("lib_sysconfig.host.service_restart")
     @mock.patch("lib_sysconfig.render")
-    def test_update_cpufreq_governor_not_available(self, render, restart, config, check_call):
+    def test_update_cpufreq_governor_not_available(
+        self, render, restart, config, check_call
+    ):
         """Set wrong governor.
 
         Expect /etc/default/cpufrequtils is not rendered
@@ -199,9 +207,9 @@ class TestLib:
             "raid-autodetection": "noautodetect",
             "enable-pti": True,
             "enable-iommu": True,
-            "grub-config-flags": "TEST_KEY=\"TEST VALUE, WITH COMMA\", GRUB_TIMEOUT=0",
+            "grub-config-flags": 'TEST_KEY="TEST VALUE, WITH COMMA", GRUB_TIMEOUT=0',
             "kernel-version": "4.15.0-38-generic",
-            "update-grub": True
+            "update-grub": True,
         }
 
         expected = {
@@ -210,8 +218,12 @@ class TestLib:
             "hugepagesz": "1G",
             "raid": "noautodetect",
             "iommu": True,
-            "grub_config_flags": {"GRUB_TIMEOUT": "0", "TEST_KEY": "\"TEST VALUE, WITH COMMA\""},
-            "grub_default": "Advanced options for Ubuntu>Ubuntu, with Linux 4.15.0-38-generic"
+            "grub_config_flags": {
+                "GRUB_TIMEOUT": "0",
+                "TEST_KEY": '"TEST VALUE, WITH COMMA"',
+            },
+            "grub_default": "Advanced options for Ubuntu>Ubuntu, "
+            "with Linux 4.15.0-38-generic",
         }
 
         sysh = lib_sysconfig.SysConfigHelper()
@@ -241,9 +253,9 @@ class TestLib:
             "raid-autodetection": "noautodetect",
             "enable-pti": True,
             "enable-iommu": True,
-            "grub-config-flags": "TEST_KEY=\"TEST VALUE, WITH COMMA\", GRUB_TIMEOUT=0",
+            "grub-config-flags": 'TEST_KEY="TEST VALUE, WITH COMMA", GRUB_TIMEOUT=0',
             "kernel-version": "4.15.0-38-generic",
-            "update-grub": True
+            "update-grub": True,
         }
 
         expected = {
@@ -252,8 +264,12 @@ class TestLib:
             "hugepagesz": "1G",
             "raid": "noautodetect",
             "iommu": True,
-            "grub_config_flags": {"GRUB_TIMEOUT": "0", "TEST_KEY": "\"TEST VALUE, WITH COMMA\""},
-            "grub_default": "Advanced options for Ubuntu>Ubuntu, with Linux 4.15.0-38-generic"
+            "grub_config_flags": {
+                "GRUB_TIMEOUT": "0",
+                "TEST_KEY": '"TEST VALUE, WITH COMMA"',
+            },
+            "grub_default": "Advanced options for Ubuntu>Ubuntu, "
+            "with Linux 4.15.0-38-generic",
         }
 
         sysh = lib_sysconfig.SysConfigHelper()
@@ -283,14 +299,18 @@ class TestLib:
             "raid-autodetection": "",
             "enable-pti": True,
             "enable-iommu": False,
-            "config-flags": "{ 'grub': 'GRUB_TIMEOUT=0, TEST=line with space, and comma'}",
+            "config-flags": "{ 'grub': 'GRUB_TIMEOUT=0, "
+            "TEST=line with space, and comma'}",
             "grub-config-flags": "",
             "kernel-version": "",
             "update-grub": True,
         }
 
         expected = {
-            "grub_config_flags": {"GRUB_TIMEOUT": "0", "TEST": "line with space, and comma"},
+            "grub_config_flags": {
+                "GRUB_TIMEOUT": "0",
+                "TEST": "line with space, and comma",
+            }
         }
 
         sysh = lib_sysconfig.SysConfigHelper()
@@ -320,9 +340,9 @@ class TestLib:
             "raid-autodetection": "noautodetect",
             "enable-pti": False,
             "enable-iommu": True,
-            "grub-config-flags": "GRUB_TIMEOUT=0, TEST=\"one,two,three, four\"",
+            "grub-config-flags": 'GRUB_TIMEOUT=0, TEST="one,two,three, four"',
             "kernel-version": "4.15.0-38-generic",
-            "update-grub": False
+            "update-grub": False,
         }
 
         expected = {
@@ -331,9 +351,10 @@ class TestLib:
             "hugepagesz": "1G",
             "raid": "noautodetect",
             "iommu": True,
-            "grub_config_flags": {"GRUB_TIMEOUT": "0", "TEST": "\"one,two,three, four\""},
-            "grub_default": "Advanced options for Ubuntu>Ubuntu, with Linux 4.15.0-38-generic",
-            'pti_off': True
+            "grub_config_flags": {"GRUB_TIMEOUT": "0", "TEST": '"one,two,three, four"'},
+            "grub_default": "Advanced options for Ubuntu>Ubuntu, "
+            "with Linux 4.15.0-38-generic",
+            "pti_off": True,
         }
 
         sysh = lib_sysconfig.SysConfigHelper()
@@ -357,15 +378,15 @@ class TestLib:
         config.return_value = {
             "reservation": "off",
             "cpu-affinity-range": "0-10",
-            "systemd-config-flags": "DefaultLimitRTTIME=1,DefaultTasksMax=10"
+            "systemd-config-flags": "DefaultLimitRTTIME=1,DefaultTasksMax=10",
         }
 
         expected = {
             "cpu_affinity_range": "0-10",
             "systemd_config_flags": {
                 "DefaultLimitRTTIME": "1",
-                "DefaultTasksMax": "10"
-            }
+                "DefaultTasksMax": "10",
+            },
         }
 
         sysh = lib_sysconfig.SysConfigHelper()
@@ -388,15 +409,15 @@ class TestLib:
         config.return_value = {
             "reservation": "affinity",
             "cpu-range": "0-10",
-            "systemd-config-flags": "DefaultLimitRTTIME=1,DefaultTasksMax=10"
+            "systemd-config-flags": "DefaultLimitRTTIME=1,DefaultTasksMax=10",
         }
 
         expected = {
             "cpu_affinity_range": "0-10",
             "systemd_config_flags": {
                 "DefaultLimitRTTIME": "1",
-                "DefaultTasksMax": "10"
-            }
+                "DefaultTasksMax": "10",
+            },
         }
 
         sysh = lib_sysconfig.SysConfigHelper()
@@ -420,15 +441,15 @@ class TestLib:
             "reservation": "off",
             "cpu-affinity-range": "0-10",
             "config-flags": "{'systemd': 'DefaultLimitRTTIME=1, DefaultTasksMax=10'}",
-            "systemd-config-flags": ""
+            "systemd-config-flags": "",
         }
 
         expected = {
             "cpu_affinity_range": "0-10",
             "systemd_config_flags": {
                 "DefaultLimitRTTIME": "1",
-                "DefaultTasksMax": "10"
-            }
+                "DefaultTasksMax": "10",
+            },
         }
 
         sysh = lib_sysconfig.SysConfigHelper()
@@ -445,21 +466,24 @@ class TestLib:
     @mock.patch("lib_sysconfig.hookenv.config")
     @mock.patch("lib_sysconfig.running_kernel")
     @mock.patch("lib_sysconfig.hookenv.log")
-    def test_install_configured_kernel_true(self, log, running_kernel, config, apt_update, apt_install):
+    def test_install_configured_kernel_true(
+        self, log, running_kernel, config, apt_update, apt_install
+    ):
         """Set config kernel=4.15.0-38-generic and running kernel is different.
 
         Expect apt install is called.
         """
-        config.return_value = {
-            "kernel-version": "4.15.0-38-generic"
-        }
+        config.return_value = {"kernel-version": "4.15.0-38-generic"}
 
         running_kernel.return_value = "4.4.0-38-generic"
         sysh = lib_sysconfig.SysConfigHelper()
         sysh.install_configured_kernel()
 
         apt_install.assert_called_with(
-            ["linux-image-{}".format("4.15.0-38-generic"), "linux-modules-extra-{}".format("4.15.0-38-generic")]
+            [
+                "linux-image-{}".format("4.15.0-38-generic"),
+                "linux-modules-extra-{}".format("4.15.0-38-generic"),
+            ]
         )
 
     @mock.patch("lib_sysconfig.apt_install")
@@ -467,15 +491,15 @@ class TestLib:
     @mock.patch("lib_sysconfig.hookenv.config")
     @mock.patch("lib_sysconfig.running_kernel")
     @mock.patch("lib_sysconfig.hookenv.log")
-    def test_install_configured_kernel_false(self, log, running_kernel, config, apt_update, apt_install):
+    def test_install_configured_kernel_false(
+        self, log, running_kernel, config, apt_update, apt_install
+    ):
         """Set config kernel=4.15.0-38-generic and running kernel is the same.
 
         Expect apt install is not called.
         """
         kernel_version = "4.15.0-38-generic"
-        config.return_value = {
-            "kernel-version": kernel_version
-        }
+        config.return_value = {"kernel-version": kernel_version}
 
         running_kernel.return_value = "4.15.0-38-generic"
         sysh = lib_sysconfig.SysConfigHelper()
@@ -488,14 +512,14 @@ class TestLib:
     @mock.patch("lib_sysconfig.hookenv.config")
     @mock.patch("lib_sysconfig.running_kernel")
     @mock.patch("lib_sysconfig.hookenv.log")
-    def test_install_configured_kernel_no_specified(self, log, running_kernel, config, apt_update, apt_install):
+    def test_install_configured_kernel_no_specified(
+        self, log, running_kernel, config, apt_update, apt_install
+    ):
         """Set config kernel=''.
 
         Expect apt install is not called.
         """
-        config.return_value = {
-            "kernel-version": ""
-        }
+        config.return_value = {"kernel-version": ""}
 
         running_kernel.return_value = "4.15.0-38-generic"
         sysh = lib_sysconfig.SysConfigHelper()
@@ -512,9 +536,7 @@ class TestLib:
 
         Expect os.remove is called
         """
-        config.return_value = {
-            "update-grub": False
-        }
+        config.return_value = {"update-grub": False}
         exists.return_value = True
 
         with NamedTemporaryFile() as ftmp:
@@ -532,9 +554,7 @@ class TestLib:
 
         Expect os.remove is not called
         """
-        config.return_value = {
-            "update-grub": False
-        }
+        config.return_value = {"update-grub": False}
         exists.return_value = False
 
         sysh = lib_sysconfig.SysConfigHelper()
@@ -557,7 +577,7 @@ class TestLib:
             source=lib_sysconfig.SYSTEMD_SYSTEM_TMPL,
             target=lib_sysconfig.SYSTEMD_SYSTEM,
             templates_dir="templates",
-            context={}
+            context={},
         )
 
     @mock.patch("lib_sysconfig.hookenv.config")
@@ -565,7 +585,9 @@ class TestLib:
     @mock.patch("lib_sysconfig.host.service_restart")
     @mock.patch("lib_sysconfig.subprocess.call")
     @mock.patch("lib_sysconfig.hookenv.log")
-    def test_remove_cpufreq_configuration_xenial(self, log, check_call, restart, render, config):
+    def test_remove_cpufreq_configuration_xenial(
+        self, log, check_call, restart, render, config
+    ):
         """Test remove cpufrequtlis configuration.
 
         Expect config is rendered with empty context.
@@ -574,18 +596,22 @@ class TestLib:
         sysh.remove_cpufreq_configuration()
 
         check_call.assert_called_with(
-            ['/bin/systemctl', 'unmask', 'ondemand'],
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            ["/bin/systemctl", "unmask", "ondemand"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
         render.assert_called_with(
             source=lib_sysconfig.CPUFREQUTILS_TMPL,
             target=lib_sysconfig.CPUFREQUTILS,
             templates_dir="templates",
-            context={}
+            context={},
         )
         restart.assert_called()
 
-    @pytest.mark.parametrize("invalid_config_key", [
-        "reservation", "raid-autodetection", "governor", "resolved-cache-mode"])
+    @pytest.mark.parametrize(
+        "invalid_config_key",
+        ["reservation", "raid-autodetection", "governor", "resolved-cache-mode"],
+    )
     @mock.patch("lib_sysconfig.hookenv.config")
     def test_wrong_config(self, config, invalid_config_key):
         """Test wrong configuration value.
@@ -597,7 +623,7 @@ class TestLib:
             "raid-autodetection": "",
             "governor": "",
             "resolved-cache-mode": "",
-            invalid_config_key: 'wrong',  # Will override the selected key with an invalid value
+            invalid_config_key: "wrong",  # Will override key with an invalid value
         }
         config.return_value = return_value
         sysh = lib_sysconfig.SysConfigHelper()
@@ -606,9 +632,7 @@ class TestLib:
     @mock.patch("lib_sysconfig.hookenv.config")
     def test_enable_container(self, config):
         """Test enable container."""
-        config.return_value = {
-            "enable-container": True
-        }
+        config.return_value = {"enable-container": True}
         sysh = lib_sysconfig.SysConfigHelper()
 
         assert sysh.enable_container
@@ -617,7 +641,9 @@ class TestLib:
     @mock.patch("lib_sysconfig.hookenv.config")
     @mock.patch("lib_sysconfig.host.service_restart")
     @mock.patch("lib_sysconfig.render")
-    def test_update_resolved_file_unchanged(self, render, restart, config, file_changed):
+    def test_update_resolved_file_unchanged(
+        self, render, restart, config, file_changed
+    ):
         """systemd-resolved is not restarted when the config file is unchanged."""
         file_changed.return_value = False
         self._test_update_resolved_common(render, config)
@@ -658,15 +684,12 @@ class TestLib:
         with mock.patch("builtins.open", mock.mock_open()) as mock_file:
             sysh.update_sysctl()
 
-        mock_file.assert_called_with(lib_sysconfig.SYSCTL_CONF, 'w')
+        mock_file.assert_called_with(lib_sysconfig.SYSCTL_CONF, "w")
         handle = mock_file()
-        handle.write.has_calls([
-            mock.call('net.ipv4.ip_forward=1\n'),
-            mock.call('vm.swappiness=60\n'),
-        ])
-        check_call.assert_called_with([
-            'sysctl', '-p', lib_sysconfig.SYSCTL_CONF
-        ])
+        handle.write.has_calls(
+            [mock.call("net.ipv4.ip_forward=1\n"), mock.call("vm.swappiness=60\n")]
+        )
+        check_call.assert_called_with(["sysctl", "-p", lib_sysconfig.SYSCTL_CONF])
 
     @mock.patch("lib_sysconfig.hookenv")
     def test_update_sysctl_invalid_yaml(self, hookenv):
@@ -676,8 +699,7 @@ class TestLib:
         with pytest.raises(Exception):
             sysh.update_sysctl()
         hookenv.log.assert_called_once_with(
-            "Error parsing sysctl YAML: {invalid",
-            level=hookenv.ERROR
+            "Error parsing sysctl YAML: {invalid", level=hookenv.ERROR
         )
         hookenv.status_set.assert_called_once_with(
             "blocked", "Error parsing sysctl YAML"
