@@ -18,18 +18,18 @@ from charms.reactive.helpers import any_file_changed
 import yaml
 
 
-GRUB_DEFAULT = 'Advanced options for Ubuntu>Ubuntu, with Linux {}'
-CPUFREQUTILS_TMPL = 'cpufrequtils.j2'
-GRUB_CONF_TMPL = 'grub.j2'
-SYSTEMD_SYSTEM_TMPL = 'etc.systemd.system.conf.j2'
-SYSTEMD_RESOLVED_TMPL = 'etc.systemd.resolved.conf.j2'
+GRUB_DEFAULT = "Advanced options for Ubuntu>Ubuntu, with Linux {}"
+CPUFREQUTILS_TMPL = "cpufrequtils.j2"
+GRUB_CONF_TMPL = "grub.j2"
+SYSTEMD_SYSTEM_TMPL = "etc.systemd.system.conf.j2"
+SYSTEMD_RESOLVED_TMPL = "etc.systemd.resolved.conf.j2"
 
-CPUFREQUTILS = '/etc/default/cpufrequtils'
-GRUB_CONF = '/etc/default/grub.d/90-sysconfig.cfg'
-SYSTEMD_SYSTEM = '/etc/systemd/system.conf'
-SYSTEMD_RESOLVED = '/etc/systemd/resolved.conf'
-SYSCTL_CONF = '/etc/sysctl.d/90-charm-sysconfig.conf'
-KERNEL = 'kernel'
+CPUFREQUTILS = "/etc/default/cpufrequtils"
+GRUB_CONF = "/etc/default/grub.d/90-sysconfig.cfg"
+SYSTEMD_SYSTEM = "/etc/systemd/system.conf"
+SYSTEMD_RESOLVED = "/etc/systemd/resolved.conf"
+SYSCTL_CONF = "/etc/sysctl.d/90-charm-sysconfig.conf"
+KERNEL = "kernel"
 
 
 def parse_config_flags(config_flags):
@@ -41,15 +41,15 @@ def parse_config_flags(config_flags):
     key_value_pairs = config_flags.split(",")
     parsed_config_flags = {}
     for index, pair in enumerate(key_value_pairs):
-        if '=' in pair:
-            key, value = map(str.strip, pair.split('=', 1))
+        if "=" in pair:
+            key, value = map(str.strip, pair.split("=", 1))
             # Note(peppepetra): if value contains a comma that is also used as
             # delimiter, we need to reconstruct the value
             i = index + 1
             while i < len(key_value_pairs):
-                if '=' in key_value_pairs[i]:
+                if "=" in key_value_pairs[i]:
                     break
-                value += ',' + key_value_pairs[i]
+                value += "," + key_value_pairs[i]
                 i += 1
             parsed_config_flags[key] = value
     return parsed_config_flags
@@ -62,7 +62,7 @@ def running_kernel():
 
 def boot_time():
     """Return timestamp of last boot."""
-    with open('/proc/uptime', 'r') as f:
+    with open("/proc/uptime", "r") as f:
         uptime_seconds = float(f.readline().split()[0])
         boot_time = datetime.now(timezone.utc) - timedelta(seconds=uptime_seconds)
         return boot_time
@@ -84,7 +84,7 @@ class BootResourceState:
     def calculate_resource_sha256sum(self, resource_name):
         """Calcucate sha256sum of contents of provided resource."""
         sha = hashlib.sha256()
-        sha.update(open(resource_name, 'rb').read())
+        sha.update(open(resource_name, "rb").read())
         return sha.hexdigest()
 
     def update_resource_checksums(self, resources):
@@ -93,8 +93,10 @@ class BootResourceState:
             if not os.path.exists(resource):
                 continue
 
-            self.db.set("{}.sha256sum".format(self.key_for(resource)),
-                        self.calculate_resource_sha256sum(resource))
+            self.db.set(
+                "{}.sha256sum".format(self.key_for(resource)),
+                self.calculate_resource_sha256sum(resource),
+            )
 
     def set_resource(self, resource_name):
         """Update db entry for the resource_name with time.now."""
@@ -116,7 +118,9 @@ class BootResourceState:
         tfloat = self.db.get(self.key_for(resource_name))
         if tfloat is not None:
             return datetime.fromtimestamp(tfloat, timezone.utc)
-        return datetime.min.replace(tzinfo=timezone.utc)  # We don't have a ts -> changed at dawn of time
+        return datetime.min.replace(
+            tzinfo=timezone.utc
+        )  # We don't have a ts -> changed at dawn of time
 
     def checksum_changed(self, resource_name):
         """Return True if checksum has changed since last recorded."""
@@ -139,11 +143,13 @@ class BootResourceState:
         :return: list of names
         """
         boot_ts = boot_time()
-        time_changed = [name for name in resource_names
-                        if boot_ts < self.get_resource_changed_timestamp(name)]
+        time_changed = [
+            name
+            for name in resource_names
+            if boot_ts < self.get_resource_changed_timestamp(name)
+        ]
 
-        csum_changed = [name for name in resource_names
-                        if self.checksum_changed(name)]
+        csum_changed = [name for name in resource_names if self.checksum_changed(name)]
 
         a = set(time_changed)
         b = set(csum_changed)
@@ -172,7 +178,7 @@ class SysConfigHelper:
     @property
     def enable_container(self):
         """Return enable-container config."""
-        return self.charm_config['enable-container']
+        return self.charm_config["enable-container"]
 
     @property
     def reservation(self):
@@ -181,14 +187,14 @@ class SysConfigHelper:
         [DEPRECATED]: this option should no longer be used.
         Instead cpu-affinity-range and isolcpus should be used.
         """
-        return self.charm_config['reservation']
+        return self.charm_config["reservation"]
 
     @property
     def cpu_affinity_range(self):
         """Return cpu-affinity-range config."""
         if self.reservation == "affinity" and self.cpu_range:
             return self.cpu_range
-        return self.charm_config['cpu-affinity-range']
+        return self.charm_config["cpu-affinity-range"]
 
     @property
     def cpu_range(self):
@@ -197,84 +203,81 @@ class SysConfigHelper:
         [DEPRECATED]: this option should no longer be used.
         Instead cpu-affinity-range and isolcpus should be used.
         """
-        return self.charm_config['cpu-range']
+        return self.charm_config["cpu-range"]
 
     @property
     def hugepages(self):
         """Return hugepages config."""
-        return self.charm_config['hugepages']
+        return self.charm_config["hugepages"]
 
     @property
     def hugepagesz(self):
         """Return hugepagesz config."""
-        return self.charm_config['hugepagesz']
+        return self.charm_config["hugepagesz"]
 
     @property
     def isolcpus(self):
         """Return isolcpus config."""
         if self.reservation == "isolcpus" and self.cpu_range:
             return self.cpu_range
-        return self.charm_config['isolcpus']
+        return self.charm_config["isolcpus"]
 
     @property
     def raid_autodetection(self):
         """Return raid-autodetection config option."""
-        return self.charm_config['raid-autodetection']
+        return self.charm_config["raid-autodetection"]
 
     @property
     def enable_pti(self):
         """Return raid-autodetection config option."""
-        return self.charm_config['enable-pti']
+        return self.charm_config["enable-pti"]
 
     @property
     def enable_iommu(self):
         """Return enable-iommu config option."""
-        return self.charm_config['enable-iommu']
+        return self.charm_config["enable-iommu"]
 
     @property
     def grub_config_flags(self):
         """Return grub-config-flags config option."""
-        return parse_config_flags(self.charm_config['grub-config-flags'])
+        return parse_config_flags(self.charm_config["grub-config-flags"])
 
     @property
     def systemd_config_flags(self):
         """Return systemd-config-flags config option."""
-        return parse_config_flags(self.charm_config['systemd-config-flags'])
+        return parse_config_flags(self.charm_config["systemd-config-flags"])
 
     @property
     def kernel_version(self):
         """Return kernel-version config option."""
-        return self.charm_config['kernel-version']
+        return self.charm_config["kernel-version"]
 
     @property
     def update_grub(self):
         """Return update-grub config option."""
-        return self.charm_config['update-grub']
+        return self.charm_config["update-grub"]
 
     @property
     def governor(self):
         """Return governor config option."""
-        return self.charm_config['governor']
+        return self.charm_config["governor"]
 
     @property
     def resolved_cache_mode(self):
         """Return resolved-cache-mode config option."""
-        return self.charm_config['resolved-cache-mode']
+        return self.charm_config["resolved-cache-mode"]
 
     @property
     def sysctl_config(self):
         """Return sysctl config option."""
-        raw_str = self.charm_config['sysctl']
+        raw_str = self.charm_config["sysctl"]
 
         try:
             parsed = yaml.safe_load(raw_str)
         except yaml.YAMLError:
             err_msg = "Error parsing sysctl YAML"
-            hookenv.status_set('blocked', err_msg)
-            hookenv.log(
-                "%s: %s" % (err_msg, raw_str),
-                level=hookenv.ERROR
-            )
+            hookenv.status_set("blocked", err_msg)
+            hookenv.log("%s: %s" % (err_msg, raw_str), level=hookenv.ERROR)
             raise
 
         return parsed
@@ -286,9 +289,9 @@ class SysConfigHelper:
         [DEPRECATED]: this option should no longer be used.
         Instead grub-config-flags and systemd-config-flags should be used.
         """
-        if not self.charm_config.get('config-flags'):
+        if not self.charm_config.get("config-flags"):
             return {}
-        flags = config_flags_parser(self.charm_config['config-flags'])
+        flags = config_flags_parser(self.charm_config["config-flags"])
         return flags
 
     def _render_boot_resource(self, source, target, context):
@@ -299,10 +302,10 @@ class SysConfigHelper:
     @staticmethod
     def _render_resource(source, target, context):
         """Render the template."""
-        render(source=source, templates_dir='templates', target=target, context=context)
+        render(source=source, templates_dir="templates", target=target, context=context)
 
     def _is_kernel_already_running(self):
-        """Check if the kernel version required by charm config is equal to kernel running."""
+        """Check if the kernel version required by charm config = kernel running."""
         configured = self.kernel_version
         if configured == running_kernel():
             hookenv.log("Already running kernel: {}".format(configured), hookenv.DEBUG)
@@ -312,21 +315,34 @@ class SysConfigHelper:
     def _update_grub(self):
         """Call update-grub when update-grub config param is set to True."""
         if self.update_grub and not host.is_container():
-            subprocess.check_call(['/usr/sbin/update-grub'])
-            hookenv.log('Running update-grub to apply grub conf updates', hookenv.DEBUG)
+            subprocess.check_call(["/usr/sbin/update-grub"])
+            hookenv.log("Running update-grub to apply grub conf updates", hookenv.DEBUG)
 
     def is_config_valid(self):
         """Validate config parameters."""
         valid = True
 
         for config_key, value, valid_values in (
-                ('reservation', self.reservation, ['off', 'isolcpus', 'affinity']),
-                ('raid-autodetection', self.raid_autodetection, ['', 'noautodetect', 'partitionable']),
-                ('governor', self.governor, ['', 'powersave', 'performance']),
-                ('resolved-cache-mode', self.resolved_cache_mode, ['', 'yes', 'no', 'no-negative']),
+            ("reservation", self.reservation, ["off", "isolcpus", "affinity"]),
+            (
+                "raid-autodetection",
+                self.raid_autodetection,
+                ["", "noautodetect", "partitionable"],
+            ),
+            ("governor", self.governor, ["", "powersave", "performance"]),
+            (
+                "resolved-cache-mode",
+                self.resolved_cache_mode,
+                ["", "yes", "no", "no-negative"],
+            ),
         ):
             if value not in valid_values:
-                hookenv.log('{} not valid. Possible values: {}'.format(config_key, repr(valid_values)), hookenv.DEBUG)
+                hookenv.log(
+                    "{} not valid. Possible values: {}".format(
+                        config_key, repr(valid_values)
+                    ),
+                    hookenv.DEBUG,
+                )
                 valid = False
 
         return valid
@@ -347,60 +363,64 @@ class SysConfigHelper:
         # This is to keep the old method of specifying the isolcpus
         # by specifying the reservation and the cpu_range
         if self.isolcpus:
-            context['isolcpus'] = self.isolcpus
+            context["isolcpus"] = self.isolcpus
         if self.hugepages:
-            context['hugepages'] = self.hugepages
+            context["hugepages"] = self.hugepages
         if self.hugepagesz:
-            context['hugepagesz'] = self.hugepagesz
+            context["hugepagesz"] = self.hugepagesz
         if self.raid_autodetection:
-            context['raid'] = self.raid_autodetection
+            context["raid"] = self.raid_autodetection
         if not self.enable_pti:
-            context['pti_off'] = True
+            context["pti_off"] = True
         if self.enable_iommu:
-            context['iommu'] = True
+            context["iommu"] = True
 
         # Note(peppepetra): First check if new grub-config-flags is used
         # if not try to fallback into legacy config-flags
         if self.grub_config_flags:
-            context['grub_config_flags'] = self.grub_config_flags
+            context["grub_config_flags"] = self.grub_config_flags
         else:
-            context['grub_config_flags'] = parse_config_flags(self.config_flags.get('grub', ''))
+            context["grub_config_flags"] = parse_config_flags(
+                self.config_flags.get("grub", "")
+            )
 
         if self.kernel_version and not self._is_kernel_already_running():
-            context['grub_default'] = GRUB_DEFAULT.format(self.kernel_version)
+            context["grub_default"] = GRUB_DEFAULT.format(self.kernel_version)
 
         self._render_boot_resource(GRUB_CONF_TMPL, GRUB_CONF, context)
-        hookenv.log('grub configuration updated')
+        hookenv.log("grub configuration updated")
         self._update_grub()
 
     def update_systemd_system_file(self):
         """Update /etc/systemd/system.conf according to charm configuration."""
         context = {}
         if self.cpu_affinity_range:
-            context['cpu_affinity_range'] = self.cpu_affinity_range
+            context["cpu_affinity_range"] = self.cpu_affinity_range
 
         # Note(peppepetra): First check if new systemd-config-flags is used
         # if not try to fallback into legacy config-flags
         if self.systemd_config_flags:
-            context['systemd_config_flags'] = self.systemd_config_flags
+            context["systemd_config_flags"] = self.systemd_config_flags
         else:
-            context['systemd_config_flags'] = parse_config_flags(self.config_flags.get('systemd', ''))
+            context["systemd_config_flags"] = parse_config_flags(
+                self.config_flags.get("systemd", "")
+            )
 
         self._render_boot_resource(SYSTEMD_SYSTEM_TMPL, SYSTEMD_SYSTEM, context)
-        hookenv.log('systemd configuration updated')
+        hookenv.log("systemd configuration updated")
 
     def update_systemd_resolved(self):
         """Update /etc/systemd/resolved.conf according to charm configuration."""
         context = {}
         if self.resolved_cache_mode:
-            context['cache'] = self.resolved_cache_mode
+            context["cache"] = self.resolved_cache_mode
         self._update_systemd_resolved(context)
-        hookenv.log('systemd-resolved configuration updated')
+        hookenv.log("systemd-resolved configuration updated")
 
     def update_sysctl(self):
         """Update sysctl according to charm configuration."""
         sysctl.create(self.sysctl_config or {}, SYSCTL_CONF)
-        hookenv.log('sysctl updated')
+        hookenv.log("sysctl updated")
 
     def install_configured_kernel(self):
         """Install kernel as given by the kernel-version config option.
@@ -408,14 +428,14 @@ class SysConfigHelper:
         Will install kernel and matching modules-extra package
         """
         if not self.kernel_version or self._is_kernel_already_running():
-            hookenv.log(
-                'Kernel is already running the required version',
-                hookenv.DEBUG
-            )
+            hookenv.log("Kernel is already running the required version", hookenv.DEBUG)
             return
 
         configured = self.kernel_version
-        pkgs = [tmpl.format(configured) for tmpl in ["linux-image-{}", "linux-modules-extra-{}"]]
+        pkgs = [
+            tmpl.format(configured)
+            for tmpl in ["linux-image-{}", "linux-modules-extra-{}"]
+        ]
         apt_update()
         apt_install(pkgs)
         hookenv.log("installing: {}".format(pkgs))
@@ -423,28 +443,34 @@ class SysConfigHelper:
 
     def update_cpufreq(self):
         """Update /etc/default/cpufrequtils and restart cpufrequtils service."""
-        if self.governor not in ('', 'performance', 'powersave'):
+        if self.governor not in ("", "performance", "powersave"):
             return
-        context = {'governor': self.governor}
+        context = {"governor": self.governor}
         self._render_boot_resource(CPUFREQUTILS_TMPL, CPUFREQUTILS, context)
-        # Ensure the ondemand service is disabled if governor is set, lp#1822774, lp#1863659, lp#740127
+        # Ensure the ondemand service is disabled if governor is set,
+        # lp#1822774, lp#1863659, lp#740127
         # Ondemand service is not updated during test if host is container.
         if not host.is_container():
-            hookenv.log('disabling the ondemand services for lp#1822774, lp#1863659,'
-                        ' and lp#740127 if a governor is specified', hookenv.DEBUG)
+            hookenv.log(
+                "disabling the ondemand services for lp#1822774, lp#1863659,"
+                " and lp#740127 if a governor is specified",
+                hookenv.DEBUG,
+            )
             if self.governor:
                 subprocess.call(
-                    ['/bin/systemctl', 'mask', 'ondemand'],
-                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+                    ["/bin/systemctl", "mask", "ondemand"],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
                 )
             else:
                 # Renable ondemand when governor is unset.
                 subprocess.call(
-                    ['/bin/systemctl', 'unmask', 'ondemand'],
-                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+                    ["/bin/systemctl", "unmask", "ondemand"],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
                 )
 
-        host.service_restart('cpufrequtils')
+        host.service_restart("cpufrequtils")
 
     def remove_grub_configuration(self):
         """Remove /etc/default/grub.d/90-sysconfig.cfg if exists.
@@ -456,8 +482,8 @@ class SysConfigHelper:
             return
         os.remove(grub_configuration_path)
         hookenv.log(
-            'deleted grub configuration at {}'.format(grub_configuration_path),
-            hookenv.DEBUG
+            "deleted grub configuration at {}".format(grub_configuration_path),
+            hookenv.DEBUG,
         )
         self._update_grub()
         self.boot_resources.set_resource(GRUB_CONF)
@@ -470,8 +496,7 @@ class SysConfigHelper:
         context = {}
         self._render_boot_resource(SYSTEMD_SYSTEM_TMPL, SYSTEMD_SYSTEM, context)
         hookenv.log(
-            'deleted systemd configuration at {}'.format(SYSTEMD_SYSTEM),
-            hookenv.DEBUG
+            "deleted systemd configuration at {}".format(SYSTEMD_SYSTEM), hookenv.DEBUG
         )
 
     def remove_resolved_configuration(self):
@@ -481,14 +506,14 @@ class SysConfigHelper:
         """
         self._update_systemd_resolved({})
         hookenv.log(
-            'deleted resolved configuration at {}'.format(SYSTEMD_RESOLVED),
-            hookenv.DEBUG
+            "deleted resolved configuration at {}".format(SYSTEMD_RESOLVED),
+            hookenv.DEBUG,
         )
 
     def _update_systemd_resolved(self, context):
         self._render_resource(SYSTEMD_RESOLVED_TMPL, SYSTEMD_RESOLVED, context)
         if any_file_changed([SYSTEMD_RESOLVED]):
-            host.service_restart('systemd-resolved')
+            host.service_restart("systemd-resolved")
 
     def remove_cpufreq_configuration(self):
         """Remove cpufrequtils configuration.
@@ -497,16 +522,18 @@ class SysConfigHelper:
         """
         context = {}
         if not host.is_container():
-            hookenv.log('Enabling the ondemand initscript for lp#1822774'
-                        ' and lp#740127', 'DEBUG')
+            hookenv.log(
+                "Enabling the ondemand initscript for lp#1822774" " and lp#740127",
+                "DEBUG",
+            )
             subprocess.call(
-                ['/bin/systemctl', 'unmask', 'ondemand'],
-                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+                ["/bin/systemctl", "unmask", "ondemand"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
             )
 
         self._render_boot_resource(CPUFREQUTILS_TMPL, CPUFREQUTILS, context)
         hookenv.log(
-            'deleted cpufreq configuration at {}'.format(CPUFREQUTILS),
-            hookenv.DEBUG
+            "deleted cpufreq configuration at {}".format(CPUFREQUTILS), hookenv.DEBUG
         )
-        host.service_restart('cpufrequtils')
+        host.service_restart("cpufrequtils")
