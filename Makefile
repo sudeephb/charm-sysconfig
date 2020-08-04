@@ -1,59 +1,82 @@
-PROJECTPATH = $(dir $(realpath $(MAKEFILE_LIST)))
-LAYERS_DIR = $(PROJECTPATH)/layers
-INTERFACES_DIR = $(PROJECTPATH)/interfaces
+PYTHON := /usr/bin/python3
 
+PROJECTPATH=$(dir $(realpath $(MAKEFILE_LIST)))
 ifndef CHARM_BUILD_DIR
-    CHARM_BUILD_DIR := $(PROJECTPATH)
-    $(warning Warning CHARM_BUILD_DIR was not set, defaulting to $(CHARM_BUILD_DIR))
+	CHARM_BUILD_DIR=${PROJECTPATH}.build
 endif
+ifndef CHARM_LAYERS_DIR
+	CHARM_LAYERS_DIR=${PROJECTPATH}/layers
+endif
+ifndef CHARM_INTERFACES_DIR
+	CHARM_INTERFACES_DIR=${PROJECTPATH}/interfaces
+endif
+METADATA_FILE="src/metadata.yaml"
+CHARM_NAME=$(shell cat ${PROJECTPATH}/${METADATA_FILE} | grep -E "^name:" | awk '{print $$2}')
 
 help:
 	@echo "This project supports the following targets"
 	@echo ""
 	@echo " make help - show this text"
-	@echo " make submodules - make sure that the submodules are up-to-date"
-	@echo " make lint - run flake8"
-	@echo " make test - run the functional tests, unittests and lint"
-	@echo " make unittest - run the tests defined in the unittest subdirectory"
-	@echo " make functional - run the tests defined in the functional subdirectory"
-	@echo " make release - build the charm"
 	@echo " make clean - remove unneeded files"
+	@echo " make submodules - make sure that the submodules are up-to-date"
+	@echo " make submodules-update - update submodules to latest changes on remote branch"
+	@echo " make build - build the charm"
+	@echo " make release - run clean, submodules, and build targets"
+	@echo " make lint - run flake8 and black --check"
+	@echo " make black - run black and reformat files"
+	@echo " make proof - run charm proof"
+	@echo " make unittests - run the tests defined in the unittest subdirectory"
+	@echo " make functional - run the tests defined in the functional subdirectory"
+	@echo " make test - run lint, proof, unittests and functional targets"
 	@echo ""
-
-submodules:
-	@echo "Cloning submodules"
-	@git submodule update --init --recursive
-
-lint:
-	@echo "Running flake8"
-	@cd src && tox -e lint
-
-test: lint unittest functional
-
-functional: build
-	@cd src && PYTEST_KEEP_MODEL=$(PYTEST_KEEP_MODEL) \
-	    PYTEST_CLOUD_NAME=$(PYTEST_CLOUD_NAME) \
-	    PYTEST_CLOUD_REGION=$(PYTEST_CLOUD_REGION) \
-	    tox -e functional
-
-unittest:
-	@cd src && tox -e unit
-
-build:
-	@echo "Building charm to base directory $(CHARM_BUILD_DIR)"
-	@-git describe --tags > ./repo-info
-	@CHARM_LAYERS_DIR=$(LAYERS_DIR) CHARM_INTERFACES_DIR=$(INTERFACES_DIR) TERM=linux\
-		charm build --output-dir $(CHARM_BUILD_DIR) $(PROJECTPATH)/src --force
-
-release: clean build
-	@echo "Charm is built at $(CHARM_BUILD_DIR)/builds"
 
 clean:
 	@echo "Cleaning files"
-	@find $(PROJECTPATH)/src -iname __pycache__ -exec rm -r {} +
-	@if [ -d $(CHARM_BUILD_DIR)/builds ] ; then rm -r $(CHARM_BUILD_DIR)/builds ; fi
-	@if [ -d $(PROJECTPATH)/src/.tox ] ; then rm -r $(PROJECTPATH)/src/.tox ; fi
-	@if [ -d $(PROJECTPATH)/src/.pytest_cache ] ; then rm -r $(PROJECTPATH)/src/.pytest_cache ; fi
+	@git clean -ffXd -e '!.idea'
+	@echo "Cleaning existing build"
+	@rm -rf ${CHARM_BUILD_DIR}/${CHARM_NAME}
+
+submodules:
+	# @echo "Cloning submodules"
+	# @git submodule update --init --recursive
+	@echo "No submodules. Skipping"
+
+submodules-update:
+	# @echo "Pulling latest updates for submodules"
+	# @git submodule update --init --recursive --remote --merge
+	@echo "No submodules. Skipping"
+
+build:
+	@echo "Building charm to directory ${CHARM_BUILD_DIR}/${CHARM_NAME}"
+	@-git rev-parse --abbrev-ref HEAD > ./src/repo-info
+	@CHARM_LAYERS_DIR=${CHARM_LAYERS_DIR} CHARM_INTERFACES_DIR=${CHARM_INTERFACES_DIR} \
+		TERM=linux CHARM_BUILD_DIR=${CHARM_BUILD_DIR} charm build src/
+
+release: clean build
+	@echo "Charm is built at ${CHARM_BUILD_DIR}/${CHARM_NAME}"
+
+lint:
+	@echo "Running lint checks"
+	@cd src && tox -e lint
+
+black:
+	@echo "Reformat files with black"
+	@cd src && tox -e black
+
+proof:
+	@echo "Running charm proof"
+	@charm proof src
+
+unittests:
+	@echo "Running unit tests"
+	@cd src && tox -e unit
+
+functional: build
+	@echo "Executing functional tests in ${CHARM_BUILD_DIR}"
+	@cd src && CHARM_BUILD_DIR=${CHARM_BUILD_DIR} tox -e func
+
+test: lint proof unittests functional
+	@echo "Tests completed for charm ${CHARM_NAME}."
 
 # The targets below don't depend on a file
-.PHONY: lint test unittest functional build release clean help submodules
+.PHONY: help submodules submodules-update clean build release lint black proof unittests functional test
