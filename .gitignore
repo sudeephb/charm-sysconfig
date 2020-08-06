@@ -1,32 +1,41 @@
+# Juju files
+.unit-state.db
+.go-cookies
+
+layers/*
+interfaces/*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
 
+# Tests files and dir
+.pytest_cache/
+.coverage
+.tox
+report/
+htmlcov/
+
 # Log files
 *.log
 
-.tox/
-.coverage
+# pycharm
+.idea/
 
 # vi
 .*.swp
 
-# pycharm
-.idea/
-.unit-state.db
-src/.unit-state.db
-
 # version data
 repo-info
+version
 
+# Python builds
+deb_dist/
+dist/
 
-# reports
-report/*
-src/report/*
+# Snaps
+*.snap
 
-# virtual env
-venv/*
-
-# builds
-builds/*
+# Builds
+.build/
