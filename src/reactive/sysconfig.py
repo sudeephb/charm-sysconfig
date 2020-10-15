@@ -106,7 +106,9 @@ def config_changed():
             "config-flags",
             "cpu-range",
         )
-    ) or helpers.any_file_changed([GRUB_CONF]):
+    ) or helpers.any_file_changed(
+        [GRUB_CONF]
+    ):  # noqa: W503
         syshelper.update_grub_file()
 
     # systemd
