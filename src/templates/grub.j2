@@ -35,6 +35,9 @@ GRUB_CMDLINE_LINUX_DEFAULT="$GRUB_CMDLINE_LINUX_DEFAULT pti=off"
 {% if iommu is defined and iommu -%}
 GRUB_CMDLINE_LINUX_DEFAULT="$GRUB_CMDLINE_LINUX_DEFAULT intel_iommu=on iommu=pt"
 {% endif -%}
+{% if tsx is defined and tsx -%}
+GRUB_CMDLINE_LINUX_DEFAULT="$GRUB_CMDLINE_LINUX_DEFAULT tsx=on tsx_async_abort=off"
+{% endif -%}
 
 {% if grub_default is defined and grub_default -%}
 GRUB_DEFAULT="{{ grub_default }}"

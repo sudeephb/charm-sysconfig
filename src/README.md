@@ -94,6 +94,13 @@ Set to true to enable it.
 If true and VT-d enabled in the BIOS, it will allow to use direct I/O
 bypassing DMA translation with pci-passthrough devices. Enable it to use SR-IOV
 
+## Enable TSX
+
+If true then `tsx=on tsx_async_abort=off` is passed on the grub command line. On
+all new kernel this is disabled by default, and this option will re-enable it.
+
+More information on the details can be found [here](https://wiki.ubuntu.com/SecurityTeam/KnowledgeBase/TAA_MCEPSC_i915)
+
 ## grub-config-flags
 
 If you need further options configured, this extra options will be added
