@@ -136,6 +136,7 @@ async def test_default_config(app, jujutools):
     assert "raid" not in grub_content
     assert "pti=off" in grub_content
     assert "intel_iommu" not in grub_content
+    assert "tsx=on" not in grub_content
     assert "GRUB_DEFAULT" not in grub_content
 
     systemd_path = "/etc/systemd/system.conf"
@@ -170,6 +171,7 @@ async def test_config_changed(app, model, jujutools):
             "raid-autodetection": "noautodetect",
             "enable-pti": "true",
             "enable-iommu": "false",
+            "enable-tsx": "true",
             "kernel-version": kernel_version,
             "grub-config-flags": "GRUB_TIMEOUT=10",
             # config-flags are ignored when grub-config-flags are used
@@ -191,6 +193,7 @@ async def test_config_changed(app, model, jujutools):
     assert "raid=noautodetect" in grub_content
     assert "pti=off" not in grub_content
     assert "intel_iommu=on iommu=pt" not in grub_content
+    assert "tsx=on tsx_async_abort=off" in grub_content
     assert (
         'GRUB_DEFAULT="{}"'.format(GRUB_DEFAULT.format(kernel_version)) in grub_content
     )

@@ -238,6 +238,11 @@ class SysConfigHelper:
         return self.charm_config["enable-iommu"]
 
     @property
+    def enable_tsx(self):
+        """Return enable-tsx config option."""
+        return self.charm_config["enable-tsx"]
+
+    @property
     def grub_config_flags(self):
         """Return grub-config-flags config option."""
         return parse_config_flags(self.charm_config["grub-config-flags"])
@@ -374,6 +379,8 @@ class SysConfigHelper:
             context["pti_off"] = True
         if self.enable_iommu:
             context["iommu"] = True
+        if self.enable_tsx:
+            context["tsx"] = True
 
         # Note(peppepetra): First check if new grub-config-flags is used
         # if not try to fallback into legacy config-flags
