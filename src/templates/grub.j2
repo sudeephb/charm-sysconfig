@@ -26,6 +26,9 @@ GRUB_CMDLINE_LINUX_DEFAULT="$GRUB_CMDLINE_LINUX_DEFAULT hugepagesz={{ hugepagesz
 {% if hugepages is defined and hugepages -%}
 GRUB_CMDLINE_LINUX_DEFAULT="$GRUB_CMDLINE_LINUX_DEFAULT hugepages={{ hugepages }}"
 {% endif -%}
+{% if default_hugepagesz is defined and default_hugepagesz -%}
+GRUB_CMDLINE_LINUX_DEFAULT="$GRUB_CMDLINE_LINUX_DEFAULT default_hugepagesz={{ default_hugepagesz }}"
+{% endif -%}
 {% if raid is defined and raid -%}
 GRUB_CMDLINE_LINUX_DEFAULT="$GRUB_CMDLINE_LINUX_DEFAULT raid={{ raid }}"
 {% endif -%}

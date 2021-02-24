@@ -66,6 +66,12 @@ It controls the size of each hugepage to be set in the system. By default the
 value is empty, if specified `hugepagesz={{ hugepagesz }}` will be attached to
 the grub cmdline.
 
+## Default hugepagesz
+
+It defines the default size of persistent huge pages configured in the kernel 
+at boot time. By default the value is empty, if specified 
+`default_hugepagesz={{ default_hugepagesz }}` will be attached to the grub cmdline.
+
 ## isolcpus
 
 It determines the pcpus that won't be used by the host (ie. the same range is

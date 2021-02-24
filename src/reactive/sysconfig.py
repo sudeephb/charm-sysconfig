@@ -97,6 +97,7 @@ def config_changed():
             "reservation",
             "hugepages",
             "hugepagesz",
+            "default-hugepagesz",
             "raid-autodetection",
             "enable-pti",
             "enable-iommu",

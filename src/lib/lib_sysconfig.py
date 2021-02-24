@@ -216,6 +216,11 @@ class SysConfigHelper:
         return self.charm_config["hugepagesz"]
 
     @property
+    def default_hugepagesz(self):
+        """Return default_hugepagesz config."""
+        return self.charm_config["default-hugepagesz"]
+
+    @property
     def isolcpus(self):
         """Return isolcpus config."""
         if self.reservation == "isolcpus" and self.cpu_range:
@@ -373,6 +378,8 @@ class SysConfigHelper:
             context["hugepages"] = self.hugepages
         if self.hugepagesz:
             context["hugepagesz"] = self.hugepagesz
+        if self.default_hugepagesz:
+            context["default_hugepagesz"] = self.default_hugepagesz
         if self.raid_autodetection:
             context["raid"] = self.raid_autodetection
         if not self.enable_pti:

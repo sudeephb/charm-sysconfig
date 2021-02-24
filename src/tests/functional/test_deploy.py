@@ -138,6 +138,7 @@ async def test_default_config(app, jujutools):
     assert "intel_iommu" not in grub_content
     assert "tsx=on" not in grub_content
     assert "GRUB_DEFAULT" not in grub_content
+    assert "default_hugepagesz" not in grub_content
 
     systemd_path = "/etc/systemd/system.conf"
     systemd_content = await jujutools.file_contents(systemd_path, unit)
@@ -168,6 +169,7 @@ async def test_config_changed(app, model, jujutools):
             "isolcpus": "1,2,3,4",
             "hugepages": "100",
             "hugepagesz": "1G",
+            "default-hugepagesz": "1G",
             "raid-autodetection": "noautodetect",
             "enable-pti": "true",
             "enable-iommu": "false",
@@ -190,6 +192,7 @@ async def test_config_changed(app, model, jujutools):
     assert "isolcpus=1,2,3,4" in grub_content
     assert "hugepages=100" in grub_content
     assert "hugepagesz=1G" in grub_content
+    assert "default_hugepagesz=1G" in grub_content
     assert "raid=noautodetect" in grub_content
     assert "pti=off" not in grub_content
     assert "intel_iommu=on iommu=pt" not in grub_content
