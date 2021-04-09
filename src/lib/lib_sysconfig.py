@@ -441,18 +441,15 @@ class SysConfigHelper:
 
         Will install kernel and matching modules-extra package
         """
-        if not self.kernel_version or self._is_kernel_already_running():
+        configured = self.kernel_version
+        if not configured:
+            return
+        apt_update()
+        apt_install("linux-modules-extra-{}".format(configured))
+        if self._is_kernel_already_running():
             hookenv.log("Kernel is already running the required version", hookenv.DEBUG)
             return
-
-        configured = self.kernel_version
-        pkgs = [
-            tmpl.format(configured)
-            for tmpl in ["linux-image-{}", "linux-modules-extra-{}"]
-        ]
-        apt_update()
-        apt_install(pkgs)
-        hookenv.log("installing: {}".format(pkgs))
+        apt_install("linux-image-{}".format(configured))
         self.boot_resources.set_resource(KERNEL)
 
     def update_cpufreq(self):

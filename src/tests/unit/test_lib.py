@@ -485,7 +485,7 @@ class TestLib:
     ):
         """Set config kernel=4.15.0-38-generic and running kernel is different.
 
-        Expect apt install is called.
+        Expect apt install is called twice.
         """
         config.return_value = {"kernel-version": "4.15.0-38-generic"}
 
@@ -493,12 +493,10 @@ class TestLib:
         sysh = lib_sysconfig.SysConfigHelper()
         sysh.install_configured_kernel()
 
-        apt_install.assert_called_with(
-            [
-                "linux-image-{}".format("4.15.0-38-generic"),
-                "linux-modules-extra-{}".format("4.15.0-38-generic"),
-            ]
+        apt_install.assert_any_call(
+            "linux-modules-extra-{}".format("4.15.0-38-generic")
         )
+        apt_install.assert_any_call("linux-image-{}".format("4.15.0-38-generic"))
 
     @mock.patch("lib_sysconfig.apt_install")
     @mock.patch("lib_sysconfig.apt_update")
@@ -510,7 +508,7 @@ class TestLib:
     ):
         """Set config kernel=4.15.0-38-generic and running kernel is the same.
 
-        Expect apt install is not called.
+        Expect apt install is called once for linux-modules-extra.
         """
         kernel_version = "4.15.0-38-generic"
         config.return_value = {"kernel-version": kernel_version}
@@ -519,7 +517,9 @@ class TestLib:
         sysh = lib_sysconfig.SysConfigHelper()
         sysh.install_configured_kernel()
 
-        apt_install.assert_not_called()
+        apt_install.assert_called_with(
+            "linux-modules-extra-{}".format("4.15.0-38-generic")
+        )
 
     @mock.patch("lib_sysconfig.apt_install")
     @mock.patch("lib_sysconfig.apt_update")
