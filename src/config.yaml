@@ -1,4 +1,4 @@
-# Copyright 2019 Canonical Ltd.
+# Copyright 2019-2021 Canonical Ltd.
 #
 # This file is part of the SYSConfig Charm for Juju.
 #
@@ -26,7 +26,7 @@ options:
     default: "off"
     description: |
         Type of CPU reservation: isolcpus, affinity, off
-        isolcpus is a kernel cmdline paremeter
+        isolcpus is a kernel cmdline parameter
         affinity (CPU Affinity) is a systemd configuration parameter.
         Other processes inherit from systemd-system.conf
         off (default) disables any CPU reservation on host-side.
@@ -39,7 +39,7 @@ options:
     description: |
         Single pcpus (0,1,2) or range of pcpus (0-10)
 
-        This will update /etc/systemd.conf and update the CPUAffinity
+        This will update /etc/systemd/system.conf and update the CPUAffinity
         variable with the option here
   cpu-range:
     type: string
