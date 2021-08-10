@@ -357,11 +357,7 @@ class SysConfigHelper:
 
         return valid
 
-    def update_grub_file(self):
-        """Update /etc/default/grub.d/90-sysconfig.cfg according to charm configuration.
-
-        Will call update-grub if update-grub config is set to True.
-        """
+    def _assemble_context(self):
         context = {}
 
         # The isolcpus boot option can be used to isolate one or more CPUs at
@@ -372,14 +368,11 @@ class SysConfigHelper:
 
         # This is to keep the old method of specifying the isolcpus
         # by specifying the reservation and the cpu_range
-        if self.isolcpus:
-            context["isolcpus"] = self.isolcpus
-        if self.hugepages:
-            context["hugepages"] = self.hugepages
-        if self.hugepagesz:
-            context["hugepagesz"] = self.hugepagesz
-        if self.default_hugepagesz:
-            context["default_hugepagesz"] = self.default_hugepagesz
+        for attr in ["isolcpus", "hugepages", "hugepagesz", "default_hugepagesz"]:
+            val = getattr(self, attr, None)
+            if val:
+                context[attr] = val
+
         if self.raid_autodetection:
             context["raid"] = self.raid_autodetection
         if not self.enable_pti:
@@ -401,6 +394,14 @@ class SysConfigHelper:
         if self.kernel_version and not self._is_kernel_already_running():
             context["grub_default"] = GRUB_DEFAULT.format(self.kernel_version)
 
+        return context
+
+    def update_grub_file(self):
+        """Update /etc/default/grub.d/90-sysconfig.cfg according to charm configuration.
+
+        Will call update-grub if update-grub config is set to True.
+        """
+        context = self._assemble_context()
         self._render_boot_resource(GRUB_CONF_TMPL, GRUB_CONF, context)
         hookenv.log("grub configuration updated")
         self._update_grub()
@@ -441,18 +442,15 @@ class SysConfigHelper:
 
         Will install kernel and matching modules-extra package
         """
-        if not self.kernel_version or self._is_kernel_already_running():
+        configured = self.kernel_version
+        if not configured:
+            return
+        apt_update()
+        apt_install("linux-modules-extra-{}".format(configured))
+        if self._is_kernel_already_running():
             hookenv.log("Kernel is already running the required version", hookenv.DEBUG)
             return
-
-        configured = self.kernel_version
-        pkgs = [
-            tmpl.format(configured)
-            for tmpl in ["linux-image-{}", "linux-modules-extra-{}"]
-        ]
-        apt_update()
-        apt_install(pkgs)
-        hookenv.log("installing: {}".format(pkgs))
+        apt_install("linux-image-{}".format(configured))
         self.boot_resources.set_resource(KERNEL)
 
     def update_cpufreq(self):

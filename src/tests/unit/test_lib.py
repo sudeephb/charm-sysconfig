@@ -190,15 +190,17 @@ class TestLib:
         restart.assert_not_called()
         check_call.assert_not_called()
 
+    @mock.patch("lib_sysconfig.host.is_container")
     @mock.patch("lib_sysconfig.subprocess.check_call")
     @mock.patch("lib_sysconfig.hookenv.config")
     @mock.patch("lib_sysconfig.hookenv.log")
     @mock.patch("lib_sysconfig.render")
-    def test_update_grub_file(self, render, log, config, check_call):
+    def test_update_grub_file(self, render, log, config, check_call, is_container):
         """Update /etc/default/grub.d/90-sysconfig.cfg and update-grub true.
 
         Expect file is rendered with correct config and updated-grub is called.
         """
+        is_container.return_value = False
         config.return_value = {
             "reservation": "off",
             "isolcpus": "0-10",
@@ -240,15 +242,19 @@ class TestLib:
         )
         check_call.assert_called()
 
+    @mock.patch("lib_sysconfig.host.is_container")
     @mock.patch("lib_sysconfig.subprocess.check_call")
     @mock.patch("lib_sysconfig.hookenv.config")
     @mock.patch("lib_sysconfig.hookenv.log")
     @mock.patch("lib_sysconfig.render")
-    def test_grub_legacy_reservation(self, render, log, config, check_call):
+    def test_grub_legacy_reservation(
+        self, render, log, config, check_call, is_container
+    ):
         """Update /etc/default/grub.d/90-sysconfig.cfg and update-grub true.
 
         Expect file is rendered with correct config and updated-grub is called.
         """
+        is_container.return_value = False
         config.return_value = {
             "reservation": "isolcpus",
             "cpu-range": "0-10",
@@ -290,15 +296,19 @@ class TestLib:
         )
         check_call.assert_called()
 
+    @mock.patch("lib_sysconfig.host.is_container")
     @mock.patch("lib_sysconfig.subprocess.check_call")
     @mock.patch("lib_sysconfig.hookenv.config")
     @mock.patch("lib_sysconfig.hookenv.log")
     @mock.patch("lib_sysconfig.render")
-    def test_legacy_grub_config_flags(self, render, log, config, check_call):
+    def test_legacy_grub_config_flags(
+        self, render, log, config, check_call, is_container
+    ):
         """Update /etc/default/grub.d/90-sysconfig.cfg and update-grub true.
 
         Expect file is rendered with correct config and updated-grub is called.
         """
+        is_container.return_value = False
         config.return_value = {
             "reservation": "off",
             "isolcpus": "",
@@ -485,7 +495,7 @@ class TestLib:
     ):
         """Set config kernel=4.15.0-38-generic and running kernel is different.
 
-        Expect apt install is called.
+        Expect apt install is called twice.
         """
         config.return_value = {"kernel-version": "4.15.0-38-generic"}
 
@@ -493,12 +503,10 @@ class TestLib:
         sysh = lib_sysconfig.SysConfigHelper()
         sysh.install_configured_kernel()
 
-        apt_install.assert_called_with(
-            [
-                "linux-image-{}".format("4.15.0-38-generic"),
-                "linux-modules-extra-{}".format("4.15.0-38-generic"),
-            ]
+        apt_install.assert_any_call(
+            "linux-modules-extra-{}".format("4.15.0-38-generic")
         )
+        apt_install.assert_any_call("linux-image-{}".format("4.15.0-38-generic"))
 
     @mock.patch("lib_sysconfig.apt_install")
     @mock.patch("lib_sysconfig.apt_update")
@@ -510,7 +518,7 @@ class TestLib:
     ):
         """Set config kernel=4.15.0-38-generic and running kernel is the same.
 
-        Expect apt install is not called.
+        Expect apt install is called once for linux-modules-extra.
         """
         kernel_version = "4.15.0-38-generic"
         config.return_value = {"kernel-version": kernel_version}
@@ -519,7 +527,9 @@ class TestLib:
         sysh = lib_sysconfig.SysConfigHelper()
         sysh.install_configured_kernel()
 
-        apt_install.assert_not_called()
+        apt_install.assert_called_with(
+            "linux-modules-extra-{}".format("4.15.0-38-generic")
+        )
 
     @mock.patch("lib_sysconfig.apt_install")
     @mock.patch("lib_sysconfig.apt_update")
