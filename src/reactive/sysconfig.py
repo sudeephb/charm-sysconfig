@@ -132,8 +132,8 @@ def config_changed():
         syshelper.update_sysctl()
 
     # irqbalance
-    if any(
-        syshelper.charm_config.changed(flag) for flag in "irqbalance-banned-cpus"
+    if syshelper.charm_config.changed(
+        "irqbalance-banned-cpus"
     ) or helpers.any_file_changed([IRQBALANCE_CONF]):
         syshelper.update_irqbalance()
 
@@ -160,7 +160,7 @@ def update_status():
     if is_flag_set("sysconfig.unsupported"):
         return
 
-    resources = [KERNEL, SYSTEMD_SYSTEM, GRUB_CONF]
+    resources = [KERNEL, SYSTEMD_SYSTEM, GRUB_CONF, IRQBALANCE_CONF]
     boot_changes = SysConfigHelper.boot_resources.resources_changed_since_boot(
         resources
     )

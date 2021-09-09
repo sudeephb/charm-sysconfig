@@ -241,7 +241,7 @@ async def test_config_changed(app, model, jujutools):
         assert results["Code"] == "0"
 
     # test irqbalance_banned_cpus
-    await app.set_config({"irqbalance_banned_cpus": "3000030000300003"})
+    await app.set_config({"irqbalance-banned-cpus": "3000030000300003"})
     await model.block_until(lambda: app.status == "active", timeout=TIMEOUT)
     assert app.status == "active"
     irqbalance_path = "/etc/default/irqbalance"
