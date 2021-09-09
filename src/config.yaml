@@ -176,7 +176,7 @@ options:
     type: string
     default: ""
     description: |
-      64 bit bitmask which allows you to indicate which cpu's should
-      be skipped when reblancing irqs.  Cpu numbers which have their
+      64 bit bitmask which allows you to indicate which CPU's should
+      be skipped when reblancing irqs.  CPU numbers which have their
       corresponding bits set to one in this mask will not have any
-      irq's assigned to them on rebalance
+      IRQs assigned to them on rebalance
