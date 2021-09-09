@@ -152,6 +152,14 @@ async def test_default_config(app, jujutools):
     cpufreq_content = await jujutools.file_contents(cpufreq_path, unit)
     assert "GOVERNOR" not in cpufreq_content
 
+    irqbalance_path = "/etc/default/irqbalance"
+    irqbalance_content = await jujutools.file_contents(irqbalance_path, unit)
+    irqbalance_valid = True
+    for line in irqbalance_content:
+        if line.startswith("IRQBALANCE_BANNED_CPUS"):
+            irqbalance_valid = False
+    assert irqbalance_valid
+
 
 async def test_config_changed(app, model, jujutools):
     """Test configuration changed for grub, systemd, cpufrqutils and kernel."""
@@ -231,6 +239,14 @@ async def test_config_changed(app, model, jujutools):
         cmd = "dpkg -l | grep {}".format(pkg)
         results = await jujutools.run_command(cmd, unit)
         assert results["Code"] == "0"
+
+    # test irqbalance_banned_cpus
+    await app.set_config({"irqbalance-banned-cpus": "3000030000300003"})
+    await model.block_until(lambda: app.status == "active", timeout=TIMEOUT)
+    assert app.status == "active"
+    irqbalance_path = "/etc/default/irqbalance"
+    irqbalance_content = await jujutools.file_contents(irqbalance_path, unit)
+    assert "IRQBALANCE_BANNED_CPUS=3000030000300003" in irqbalance_content
 
     # test update-status show that reboot is required
     assert "reboot required." in unit.workload_status_message
@@ -387,3 +403,7 @@ async def test_uninstall(app, model, jujutools, series):
     cpufreq_path = "/etc/default/cpufrequtils"
     cpufreq_content = await jujutools.file_contents(cpufreq_path, unit)
     assert "GOVERNOR" not in cpufreq_content
+
+    irqbalance_path = "/etc/default/irqbalance"
+    irqbalance_content = await jujutools.file_contents(irqbalance_path, unit)
+    assert "IRQBALANCE_BANNED_CPUS=3000030000300003" not in irqbalance_content

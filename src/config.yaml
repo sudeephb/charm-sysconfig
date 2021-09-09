@@ -172,3 +172,11 @@ options:
       persistently.
 
       eg. { kernel.max_pid: 1337, net.ipv4.ip_forward: 0 }
+  irqbalance-banned-cpus:
+    type: string
+    default: ""
+    description: |
+      64 bit bitmask which allows you to indicate which CPU's should
+      be skipped when reblancing irqs.  CPU numbers which have their
+      corresponding bits set to one in this mask will not have any
+      IRQs assigned to them on rebalance

@@ -23,6 +23,7 @@ CPUFREQUTILS_TMPL = "cpufrequtils.j2"
 GRUB_CONF_TMPL = "grub.j2"
 SYSTEMD_SYSTEM_TMPL = "etc.systemd.system.conf.j2"
 SYSTEMD_RESOLVED_TMPL = "etc.systemd.resolved.conf.j2"
+IRQBALANCE_CONF_TMPL = "irqbalance.j2"
 
 CPUFREQUTILS = "/etc/default/cpufrequtils"
 GRUB_CONF = "/etc/default/grub.d/90-sysconfig.cfg"
@@ -30,6 +31,7 @@ SYSTEMD_SYSTEM = "/etc/systemd/system.conf"
 SYSTEMD_RESOLVED = "/etc/systemd/resolved.conf"
 SYSCTL_CONF = "/etc/sysctl.d/90-charm-sysconfig.conf"
 KERNEL = "kernel"
+IRQBALANCE_CONF = "/etc/default/irqbalance"
 
 
 def parse_config_flags(config_flags):
@@ -304,6 +306,11 @@ class SysConfigHelper:
         flags = config_flags_parser(self.charm_config["config-flags"])
         return flags
 
+    @property
+    def irqbalance_banned_cpus(self):
+        """Return irqbalance-banned-cpus config option."""
+        return self.charm_config["irqbalance-banned-cpus"]
+
     def _render_boot_resource(self, source, target, context):
         """Render the template and set the resource as changed."""
         self._render_resource(source, target, context)
@@ -484,6 +491,14 @@ class SysConfigHelper:
 
         host.service_restart("cpufrequtils")
 
+    def update_irqbalance(self):
+        """Update /etc/default/irqbalance."""
+        context = {}
+        if self.irqbalance_banned_cpus:
+            context["irqbalance_banned_cpus"] = self.irqbalance_banned_cpus
+        self._render_boot_resource(IRQBALANCE_CONF_TMPL, IRQBALANCE_CONF, context)
+        hookenv.log("irqbalance configuration updated")
+
     def remove_grub_configuration(self):
         """Remove /etc/default/grub.d/90-sysconfig.cfg if exists.
 
@@ -549,3 +564,9 @@ class SysConfigHelper:
             "deleted cpufreq configuration at {}".format(CPUFREQUTILS), hookenv.DEBUG
         )
         host.service_restart("cpufrequtils")
+
+    def remove_irqbalance_conifguration(self):
+        """Remove config from /etc/default/irqbalance."""
+        context = {}
+        self._render_boot_resource(IRQBALANCE_CONF_TMPL, IRQBALANCE_CONF, context)
+        hookenv.log("irqbalance configuration deleted")

@@ -32,6 +32,7 @@ from charms.reactive import (
 from lib_sysconfig import (
     CPUFREQUTILS,
     GRUB_CONF,
+    IRQBALANCE_CONF,
     KERNEL,
     SYSTEMD_RESOLVED,
     SYSTEMD_SYSTEM,
@@ -64,6 +65,7 @@ def install_sysconfig():
     syshelper.update_grub_file()
     syshelper.update_systemd_system_file()
     syshelper.update_systemd_resolved()
+    syshelper.update_irqbalance()
     set_flag("sysconfig.installed")
     update_status()
 
@@ -125,8 +127,15 @@ def config_changed():
     ) or helpers.any_file_changed([SYSTEMD_RESOLVED]):
         syshelper.update_systemd_resolved()
 
+    # sysctl
     if syshelper.charm_config.changed("sysctl"):
         syshelper.update_sysctl()
+
+    # irqbalance
+    if syshelper.charm_config.changed(
+        "irqbalance-banned-cpus"
+    ) or helpers.any_file_changed([IRQBALANCE_CONF]):
+        syshelper.update_irqbalance()
 
     update_status()
 
@@ -151,7 +160,7 @@ def update_status():
     if is_flag_set("sysconfig.unsupported"):
         return
 
-    resources = [KERNEL, SYSTEMD_SYSTEM, GRUB_CONF]
+    resources = [KERNEL, SYSTEMD_SYSTEM, GRUB_CONF, IRQBALANCE_CONF]
     boot_changes = SysConfigHelper.boot_resources.resources_changed_since_boot(
         resources
     )
@@ -184,5 +193,6 @@ def remove_configuration():
     syshelper.remove_grub_configuration()
     syshelper.remove_systemd_configuration()
     syshelper.remove_resolved_configuration()
+    syshelper.remove_irqbalance_conifguration()
     clear_flag("sysconfig.installed")
     clear_flag("sysconfig.unsupported")
