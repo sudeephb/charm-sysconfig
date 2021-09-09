@@ -32,11 +32,11 @@ from charms.reactive import (
 from lib_sysconfig import (
     CPUFREQUTILS,
     GRUB_CONF,
+    IRQBALANCE_CONF,
     KERNEL,
     SYSTEMD_RESOLVED,
     SYSTEMD_SYSTEM,
     SysConfigHelper,
-    IRQBALANCE_CONF,
 )
 
 
@@ -133,8 +133,7 @@ def config_changed():
 
     # irqbalance
     if any(
-            syshelper.charm_config.changed(flag)
-            for flag in "irqbalance-banned-cpus"
+        syshelper.charm_config.changed(flag) for flag in "irqbalance-banned-cpus"
     ) or helpers.any_file_changed([IRQBALANCE_CONF]):
         syshelper.update_irqbalance()
 

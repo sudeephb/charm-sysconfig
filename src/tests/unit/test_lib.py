@@ -554,7 +554,7 @@ class TestLib:
     @mock.patch("lib_sysconfig.hookenv.config")
     @mock.patch("lib_sysconfig.hookenv.log")
     @mock.patch("lib_sysconfig.render")
-    def test_update_systemd_system_file(self, render, log, config):
+    def test_update_irqbalance_file(self, render, log, config):
         """Update /etc/default/irqbalance.
 
         Expect file is rendered with correct config.

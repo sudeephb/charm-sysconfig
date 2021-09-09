@@ -308,7 +308,7 @@ class SysConfigHelper:
 
     @property
     def irqbalance_banned_cpus(self):
-        """Return irqbalance-banned-cpus config option"""
+        """Return irqbalance-banned-cpus config option."""
         return self.charm_config["irqbalance-banned-cpus"]
 
     def _render_boot_resource(self, source, target, context):
@@ -492,6 +492,7 @@ class SysConfigHelper:
         host.service_restart("cpufrequtils")
 
     def update_irqbalance(self):
+        """Update /etc/default/irqbalance."""
         context = {}
         if self.irqbalance_banned_cpus:
             context["irqbalance_banned_cpus"] = self.irqbalance_banned_cpus
@@ -565,6 +566,7 @@ class SysConfigHelper:
         host.service_restart("cpufrequtils")
 
     def remove_irqbalance_conifguration(self):
+        """Remove config from /etc/default/irqbalance."""
         context = {}
         self._render_boot_resource(IRQBALANCE_CONF_TMPL, IRQBALANCE_CONF, context)
         hookenv.log("irqbalance configuration deleted")
