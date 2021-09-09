@@ -552,6 +552,31 @@ class TestLib:
         apt_install.assert_not_called()
 
     @mock.patch("lib_sysconfig.hookenv.config")
+    @mock.patch("lib_sysconfig.hookenv.log")
+    @mock.patch("lib_sysconfig.render")
+    def test_update_systemd_system_file(self, render, log, config):
+        """Update /etc/default/irqbalance.
+
+        Expect file is rendered with correct config.
+        """
+        config.return_value = {
+            "irqbalance-banned-cpus": "3000030000300003",
+        }
+
+        expected = {
+            "irqbalance_banned_cpus": "3000030000300003",
+        }
+
+        sysh = lib_sysconfig.SysConfigHelper()
+        sysh.update_irqbalance()
+        render.assert_called_with(
+            source=lib_sysconfig.IRQBALANCE_CONF_TMPL,
+            target=lib_sysconfig.IRQBALANCE_CONF,
+            templates_dir="templates",
+            context=expected,
+        )
+
+    @mock.patch("lib_sysconfig.hookenv.config")
     @mock.patch("lib_sysconfig.os.remove")
     @mock.patch("lib_sysconfig.hookenv.log")
     @mock.patch("lib_sysconfig.os.path.exists")
@@ -727,4 +752,22 @@ class TestLib:
         )
         hookenv.status_set.assert_called_once_with(
             "blocked", "Error parsing sysctl YAML"
+        )
+
+    @mock.patch("lib_sysconfig.hookenv.config")
+    @mock.patch("lib_sysconfig.hookenv.log")
+    @mock.patch("lib_sysconfig.render")
+    def test_remove_irqbalance_configuratioon(self, render, log, config):
+        """Test remove irqbalance configuration.
+
+        Expect file is rendered with empty context.
+        """
+        sysh = lib_sysconfig.SysConfigHelper()
+        sysh.remove_irqbalance_conifguration()
+
+        render.assert_called_with(
+            source=lib_sysconfig.IRQBALANCE_CONF_TMPL,
+            target=lib_sysconfig.IRQBALANCE_CONF,
+            templates_dir="templates",
+            context={},
         )

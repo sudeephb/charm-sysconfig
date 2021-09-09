@@ -36,6 +36,7 @@ from lib_sysconfig import (
     SYSTEMD_RESOLVED,
     SYSTEMD_SYSTEM,
     SysConfigHelper,
+    IRQBALANCE_CONF,
 )
 
 
@@ -64,6 +65,7 @@ def install_sysconfig():
     syshelper.update_grub_file()
     syshelper.update_systemd_system_file()
     syshelper.update_systemd_resolved()
+    syshelper.update_irqbalance()
     set_flag("sysconfig.installed")
     update_status()
 
@@ -125,8 +127,16 @@ def config_changed():
     ) or helpers.any_file_changed([SYSTEMD_RESOLVED]):
         syshelper.update_systemd_resolved()
 
+    # sysctl
     if syshelper.charm_config.changed("sysctl"):
         syshelper.update_sysctl()
+
+    # irqbalance
+    if any(
+            syshelper.charm_config.changed(flag)
+            for flag in "irqbalance-banned-cpus"
+    ) or helpers.any_file_changed([IRQBALANCE_CONF]):
+        syshelper.update_irqbalance()
 
     update_status()
 
@@ -184,5 +194,6 @@ def remove_configuration():
     syshelper.remove_grub_configuration()
     syshelper.remove_systemd_configuration()
     syshelper.remove_resolved_configuration()
+    syshelper.remove_irqbalance_conifguration()
     clear_flag("sysconfig.installed")
     clear_flag("sysconfig.unsupported")
