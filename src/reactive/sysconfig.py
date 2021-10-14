@@ -160,7 +160,7 @@ def update_status():
     if is_flag_set("sysconfig.unsupported"):
         return
 
-    resources = [KERNEL, SYSTEMD_SYSTEM, GRUB_CONF, IRQBALANCE_CONF]
+    resources = [KERNEL, SYSTEMD_SYSTEM, GRUB_CONF]
     boot_changes = SysConfigHelper.boot_resources.resources_changed_since_boot(
         resources
     )
@@ -193,6 +193,6 @@ def remove_configuration():
     syshelper.remove_grub_configuration()
     syshelper.remove_systemd_configuration()
     syshelper.remove_resolved_configuration()
-    syshelper.remove_irqbalance_conifguration()
+    syshelper.remove_irqbalance_configuration()
     clear_flag("sysconfig.installed")
     clear_flag("sysconfig.unsupported")
