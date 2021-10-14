@@ -551,10 +551,11 @@ class TestLib:
 
         apt_install.assert_not_called()
 
+    @mock.patch("lib_sysconfig.host.service_restart")
     @mock.patch("lib_sysconfig.hookenv.config")
     @mock.patch("lib_sysconfig.hookenv.log")
     @mock.patch("lib_sysconfig.render")
-    def test_update_irqbalance_file(self, render, log, config):
+    def test_update_irqbalance_file(self, render, log, config, restart):
         """Update /etc/default/irqbalance.
 
         Expect file is rendered with correct config.
@@ -575,6 +576,8 @@ class TestLib:
             templates_dir="templates",
             context=expected,
         )
+
+        restart.assert_called()
 
     @mock.patch("lib_sysconfig.hookenv.config")
     @mock.patch("lib_sysconfig.os.remove")
@@ -754,16 +757,17 @@ class TestLib:
             "blocked", "Error parsing sysctl YAML"
         )
 
+    @mock.patch("lib_sysconfig.host.service_restart")
     @mock.patch("lib_sysconfig.hookenv.config")
     @mock.patch("lib_sysconfig.hookenv.log")
     @mock.patch("lib_sysconfig.render")
-    def test_remove_irqbalance_configuratioon(self, render, log, config):
+    def test_remove_irqbalance_configuratioon(self, render, log, configm, restart):
         """Test remove irqbalance configuration.
 
         Expect file is rendered with empty context.
         """
         sysh = lib_sysconfig.SysConfigHelper()
-        sysh.remove_irqbalance_conifguration()
+        sysh.remove_irqbalance_configuration()
 
         render.assert_called_with(
             source=lib_sysconfig.IRQBALANCE_CONF_TMPL,
@@ -771,3 +775,5 @@ class TestLib:
             templates_dir="templates",
             context={},
         )
+
+        restart.assert_called()
