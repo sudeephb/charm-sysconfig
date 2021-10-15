@@ -761,7 +761,7 @@ class TestLib:
     @mock.patch("lib_sysconfig.hookenv.config")
     @mock.patch("lib_sysconfig.hookenv.log")
     @mock.patch("lib_sysconfig.render")
-    def test_remove_irqbalance_configuratioon(self, render, log, configm, restart):
+    def test_remove_irqbalance_configuration(self, render, log, config, restart):
         """Test remove irqbalance configuration.
 
         Expect file is rendered with empty context.
