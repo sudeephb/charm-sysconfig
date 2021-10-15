@@ -100,20 +100,8 @@ async def test_sysconfig_deploy(model, series, source, request):
     await sysconfig_app.add_relation(
         "juju-info", "{}:juju-info".format(principal_app_name)
     )
-
-    await model.block_until(lambda: sysconfig_app.status == "blocked", timeout=TIMEOUT)
-
-
-async def test_cannot_run_in_container(app):
-    """Test that default config doesn't allow to install in container."""
-    assert app.status == "blocked"
-
-
-async def test_forced_deploy(app, model):
-    """Force to install in container for testing purpose."""
-    await app.set_config({"enable-container": "true"})
-    await model.block_until(lambda: app.status == "active", timeout=TIMEOUT)
-    assert app.status == "active"
+    await sysconfig_app.set_config({"enable-container": "true"})
+    await model.block_until(lambda: sysconfig_app.status == "active", timeout=TIMEOUT)
 
 
 async def test_cpufrequtils_intalled(app, jujutools):
