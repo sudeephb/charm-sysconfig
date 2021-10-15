@@ -497,6 +497,7 @@ class SysConfigHelper:
         if self.irqbalance_banned_cpus:
             context["irqbalance_banned_cpus"] = self.irqbalance_banned_cpus
         self._render_boot_resource(IRQBALANCE_CONF_TMPL, IRQBALANCE_CONF, context)
+        host.service_restart("irqbalance")
         hookenv.log("irqbalance configuration updated")
 
     def remove_grub_configuration(self):
@@ -565,8 +566,9 @@ class SysConfigHelper:
         )
         host.service_restart("cpufrequtils")
 
-    def remove_irqbalance_conifguration(self):
+    def remove_irqbalance_configuration(self):
         """Remove config from /etc/default/irqbalance."""
         context = {}
         self._render_boot_resource(IRQBALANCE_CONF_TMPL, IRQBALANCE_CONF, context)
+        host.service_restart("irqbalance")
         hookenv.log("irqbalance configuration deleted")
