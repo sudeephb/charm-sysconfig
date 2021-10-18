@@ -36,6 +36,12 @@ clean:
 	@echo "Cleaning existing build"
 	@rm -rf ${CHARM_BUILD_DIR}/${CHARM_NAME}
 
+dev-environment:
+	@echo "Creating virtualenv"
+	@virtualenv -p python3 .venv
+	@.venv/bin/pip install -r requirements-dev.txt
+	@.venv/bin/pre-commit install
+
 submodules:
 	# @echo "Cloning submodules"
 	# @git submodule update --init --recursive
