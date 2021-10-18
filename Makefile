@@ -23,7 +23,7 @@ help:
 	@echo " make build - build the charm"
 	@echo " make release - run clean, submodules, and build targets"
 	@echo " make lint - run flake8 and black --check"
-	@echo " make black - run black and reformat files"
+	@echo " make reformat - run black and isort and reformat files"
 	@echo " make proof - run charm proof"
 	@echo " make unittests - run the tests defined in the unittest subdirectory"
 	@echo " make functional - run the tests defined in the functional subdirectory"
@@ -59,9 +59,9 @@ lint:
 	@echo "Running lint checks"
 	@cd src && tox -e lint
 
-black:
-	@echo "Reformat files with black"
-	@cd src && tox -e black
+reformat:
+	@echo "Reformat files with black and isort"
+	@cd src && tox -e reformat
 
 proof: build
 	@echo "Running charm proof"
@@ -82,4 +82,4 @@ pre-commit:
 	@cd src && tox -e pre-commit
 
 # The targets below don't depend on a file
-.PHONY: help submodules submodules-update clean build release lint black proof unittests functional test
+.PHONY: help submodules submodules-update clean build release lint reformat proof unittests functional test
