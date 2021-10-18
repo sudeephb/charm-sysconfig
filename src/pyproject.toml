@@ -17,3 +17,8 @@ exclude = '''
   | mod
 )/
 '''
+
+[tool.isort]
+profile = "black"
+skip_glob = [".eggs", ".git", ".tox", ".venv", ".build", "dist", "charmhelpers", "mod"]
+

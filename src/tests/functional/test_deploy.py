@@ -6,9 +6,7 @@ import re
 import subprocess
 
 import pytest
-
 import websockets
-
 
 # Treat all tests as coroutines
 pytestmark = pytest.mark.asyncio

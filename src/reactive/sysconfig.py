@@ -17,7 +17,6 @@
 """Reactive hooks for sysconfig charm."""
 
 from charmhelpers.core import hookenv, host
-
 from charms.reactive import (
     clear_flag,
     helpers,
@@ -28,7 +27,6 @@ from charms.reactive import (
     when_none,
     when_not,
 )
-
 from lib_sysconfig import (
     CPUFREQUTILS,
     GRUB_CONF,
