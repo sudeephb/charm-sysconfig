@@ -78,5 +78,8 @@ functional: build
 test: lint proof unittests functional
 	@echo "Tests completed for charm ${CHARM_NAME}."
 
+pre-commit:
+	@cd src && tox -e pre-commit
+
 # The targets below don't depend on a file
 .PHONY: help submodules submodules-update clean build release lint black proof unittests functional test
