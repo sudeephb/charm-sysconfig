@@ -32,7 +32,7 @@ help:
 
 clean:
 	@echo "Cleaning files"
-	@git clean -ffXd -e '!.idea'
+	@git clean -ffXd -e '!.idea' -e '!.venv'
 	@echo "Cleaning existing build"
 	@rm -rf ${CHARM_BUILD_DIR}/${CHARM_NAME}
 
