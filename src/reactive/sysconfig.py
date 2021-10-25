@@ -108,6 +108,7 @@ def config_changed():
             "update-grub",
             "config-flags",
             "cpu-range",
+            "isolcpus",
         )
     ) or helpers.any_file_changed(
         [GRUB_CONF]
@@ -117,8 +118,16 @@ def config_changed():
     # systemd
     if any(
         syshelper.charm_config.changed(flag)
-        for flag in ("reservation", "systemd-config-flags", "cpu-range", "config-flags")
-    ) or helpers.any_file_changed([SYSTEMD_SYSTEM]):
+        for flag in (
+            "reservation",
+            "systemd-config-flags",
+            "cpu-range",
+            "config-flags",
+            "cpu-affinity-range",
+        )
+    ) or helpers.any_file_changed(
+        [SYSTEMD_SYSTEM]
+    ):  # noqa: W503
         syshelper.update_systemd_system_file()
 
     # systemd resolved
