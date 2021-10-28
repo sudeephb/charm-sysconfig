@@ -6,7 +6,6 @@ from datetime import datetime, timedelta, timezone
 from tempfile import NamedTemporaryFile
 
 import lib_sysconfig
-
 import pytest
 
 

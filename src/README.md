@@ -1,6 +1,6 @@
 # Overview
 
-This is a subordinate charm to apply grub, systemd, kernel and cpufrequtils configuration. 
+This is a subordinate charm to apply grub, systemd, kernel and cpufrequtils configuration.
 
 Note that the charm will override kernel parameters that were
 previously configured. To add or keep kernel parameters you had
@@ -8,7 +8,7 @@ previously configured see the grub-config-flags option below.
 
 Similarly, the charm will also override existing system-systemd
 configuration. To add to the systemd configuration see the
-systemd-config-flags option. 
+systemd-config-flags option.
 
 
 # Usage
@@ -68,8 +68,8 @@ the grub cmdline.
 
 ## Default hugepagesz
 
-It defines the default size of persistent huge pages configured in the kernel 
-at boot time. By default the value is empty, if specified 
+It defines the default size of persistent huge pages configured in the kernel
+at boot time. By default the value is empty, if specified
 `default_hugepagesz={{ default_hugepagesz }}` will be attached to the grub cmdline.
 
 ## isolcpus
@@ -86,8 +86,8 @@ where all auto-detected arrays are assembled as partitionable.
 
 ## Sysctl
 
-sysctl has the ability to modify kernel parameters at runtime. 
-This charm controls updating a file `/etc/sysctl.d/90-charm-sysconfig.conf` 
+sysctl has the ability to modify kernel parameters at runtime.
+This charm controls updating a file `/etc/sysctl.d/90-charm-sysconfig.conf`
 then applying that config using `sysctl -p <this file>`
 
 ## Enable Pti

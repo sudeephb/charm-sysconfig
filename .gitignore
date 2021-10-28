@@ -39,3 +39,7 @@ dist/
 
 # Builds
 .build/
+
+# Venvs
+.venv/
+venv/
