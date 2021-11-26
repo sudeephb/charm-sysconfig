@@ -69,6 +69,10 @@ reformat:
 	@echo "Reformat files with black and isort"
 	@cd src && tox -e reformat
 
+black:
+	@echo "Reformat files with black"
+	@cd src && tox -e black
+
 proof: build
 	@echo "Running charm proof"
 	@charm proof ${CHARM_BUILD_DIR}/${CHARM_NAME}
