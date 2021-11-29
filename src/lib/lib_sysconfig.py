@@ -380,7 +380,13 @@ class SysConfigHelper:
         if self.raid_autodetection:
             context["raid"] = self.raid_autodetection
         if self.enable_pti:
-            context["enable_pti"] = self.enable_pti
+            pti = self.enable_pti
+            if pti in ["on", "off"]:
+                context["enable_pti"] = pti
+            else:
+                err_msg = f"'{pti}' is not a valid config option for enable-pti."
+                hookenv.status_set("blocked", err_msg)
+                hookenv.log(err_msg, level=hookenv.ERROR)
         if self.enable_iommu:
             context["iommu"] = True
         if self.enable_tsx:
