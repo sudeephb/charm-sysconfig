@@ -379,8 +379,8 @@ class SysConfigHelper:
 
         if self.raid_autodetection:
             context["raid"] = self.raid_autodetection
-        if not self.enable_pti:
-            context["pti_off"] = True
+        if self.enable_pti:
+            context["enable_pti"] = self.enable_pti
         if self.enable_iommu:
             context["iommu"] = True
         if self.enable_tsx:
