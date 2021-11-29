@@ -1,0 +1,7 @@
+#!/usr/local/sbin/charm-env python3
+
+import subprocess
+from charmhelpers.core import hookenv
+
+subprocess.check_call(["/usr/sbin/update-grub"])
+hookenv.log("Running update-grub to apply grub conf updates", hookenv.DEBUG)
