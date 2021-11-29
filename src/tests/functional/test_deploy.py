@@ -99,7 +99,7 @@ async def test_sysconfig_deploy(model, series, source, request):
         "juju-info", "{}:juju-info".format(principal_app_name)
     )
     await sysconfig_app.set_config({"enable-container": "true"})
-    await model.block_until(lambda: sysconfig_app.status == "active", timeout=TIMEOUT)
+    await model.block_until(lambda: sysconfig_app.status == "blocked", timeout=TIMEOUT)
 
 
 async def test_cpufrequtils_intalled(app, jujutools):
@@ -120,7 +120,7 @@ async def test_default_config(app, jujutools):
     assert "hugepages" not in grub_content
     assert "hugepagesz" not in grub_content
     assert "raid" not in grub_content
-    assert "pti=off" in grub_content
+    assert "pti=off" not in grub_content
     assert "intel_iommu" not in grub_content
     assert "tsx=on" not in grub_content
     assert "GRUB_DEFAULT" not in grub_content
@@ -165,7 +165,7 @@ async def test_config_changed(app, model, jujutools):
             "hugepagesz": "1G",
             "default-hugepagesz": "1G",
             "raid-autodetection": "noautodetect",
-            "enable-pti": "true",
+            "enable-pti": "on",
             "enable-iommu": "false",
             "enable-tsx": "true",
             "kernel-version": kernel_version,
@@ -176,8 +176,8 @@ async def test_config_changed(app, model, jujutools):
             "governor": "powersave",
         }
     )
-    await model.block_until(lambda: app.status == "active", timeout=TIMEOUT)
-    assert app.status == "active"
+    await model.block_until(lambda: app.status == "blocked", timeout=TIMEOUT)
+    assert app.status == "blocked"
 
     unit = app.units[0]
 
@@ -188,7 +188,7 @@ async def test_config_changed(app, model, jujutools):
     assert "hugepagesz=1G" in grub_content
     assert "default_hugepagesz=1G" in grub_content
     assert "raid=noautodetect" in grub_content
-    assert "pti=off" not in grub_content
+    assert "pti=on" in grub_content
     assert "intel_iommu=on iommu=pt" not in grub_content
     assert "tsx=on tsx_async_abort=off" in grub_content
     assert (
@@ -202,8 +202,8 @@ async def test_config_changed(app, model, jujutools):
 
     await app.set_config({"isolcpus": "", "cpu-affinity-range": "1,2,3,4"})
 
-    await model.block_until(lambda: app.status == "active", timeout=TIMEOUT)
-    assert app.status == "active"
+    await model.block_until(lambda: app.status == "blocked", timeout=TIMEOUT)
+    assert app.status == "blocked"
 
     systemd_path = "/etc/systemd/system.conf"
     systemd_content = await jujutools.file_contents(systemd_path, unit)
@@ -228,8 +228,8 @@ async def test_config_changed(app, model, jujutools):
 
     # test irqbalance_banned_cpus
     await app.set_config({"irqbalance-banned-cpus": "3000030000300003"})
-    await model.block_until(lambda: app.status == "active", timeout=TIMEOUT)
-    assert app.status == "active"
+    await model.block_until(lambda: app.status == "blocked", timeout=TIMEOUT)
+    assert app.status == "blocked"
     irqbalance_path = "/etc/default/irqbalance"
     irqbalance_content = await jujutools.file_contents(irqbalance_path, unit)
     assert "IRQBALANCE_BANNED_CPUS=3000030000300003" in irqbalance_content
@@ -260,7 +260,7 @@ async def test_wrong_reservation(app, model):
     assert "configuration parameters not valid." in unit.workload_status_message
 
     await app.set_config({"reservation": "off"})
-    await model.block_until(lambda: app.status == "active", timeout=TIMEOUT)
+    await model.block_until(lambda: app.status == "blocked", timeout=TIMEOUT)
 
 
 @pytest.mark.parametrize(
@@ -283,7 +283,7 @@ async def test_invalid_configuration_parameters(app, model, key, bad_value, good
     assert "configuration parameters not valid." in unit.workload_status_message
 
     await app.set_config({key: good_value})
-    await model.block_until(lambda: app.status == "active", timeout=TIMEOUT)
+    await model.block_until(lambda: app.status == "blocked", timeout=TIMEOUT)
 
 
 @pytest.mark.parametrize("cache_setting", ["yes", "no", "no-negative"])
@@ -292,7 +292,7 @@ async def test_set_resolved_cache(app, model, jujutools, cache_setting):
 
     def is_model_settled():
         return (
-            app.units[0].workload_status == "active"
+            app.units[0].workload_status == "blocked"
             and app.units[0].agent_status == "idle"  # noqa: W503
         )
 
@@ -326,7 +326,7 @@ async def test_set_sysctl(app, model, jujutools, sysctl):
 
     def is_model_settled():
         return (
-            app.units[0].workload_status == "active"
+            app.units[0].workload_status == "blocked"
             and app.units[0].agent_status == "idle"  # noqa: W503
         )
 
@@ -363,7 +363,7 @@ async def test_uninstall(app, model, jujutools, series):
         }
     )
 
-    await model.block_until(lambda: app.status == "active", timeout=TIMEOUT)
+    await model.block_until(lambda: app.status == "blocked", timeout=TIMEOUT)
 
     principal_app_name = PRINCIPAL_APP_NAME.format(series)
     principal_app = model.applications[principal_app_name]
