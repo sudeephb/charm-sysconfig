@@ -256,7 +256,6 @@ async def test_wrong_reservation(app, model):
     await app.set_config({"reservation": "changeme"})
     await model.block_until(lambda: app.status == "blocked", timeout=TIMEOUT)
     assert app.status == "blocked"
-    unit = app.units[0]
 
     await app.set_config({"reservation": "off"})
     await model.block_until(lambda: app.status == "blocked", timeout=TIMEOUT)
@@ -278,7 +277,6 @@ async def test_invalid_configuration_parameters(app, model, key, bad_value, good
     await app.set_config({key: bad_value})
     await model.block_until(lambda: app.status == "blocked", timeout=TIMEOUT)
     assert app.status == "blocked"
-    unit = app.units[0]
 
     await app.set_config({key: good_value})
     await model.block_until(lambda: app.status == "blocked", timeout=TIMEOUT)
