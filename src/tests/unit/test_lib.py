@@ -207,7 +207,7 @@ class TestLib:
             "hugepagesz": "1G",
             "default-hugepagesz": "1G",
             "raid-autodetection": "noautodetect",
-            "enable-pti": True,
+            "enable-pti": "on",
             "enable-iommu": True,
             "enable-tsx": True,
             "grub-config-flags": 'TEST_KEY="TEST VALUE, WITH COMMA", GRUB_TIMEOUT=0',
@@ -222,6 +222,7 @@ class TestLib:
             "default_hugepagesz": "1G",
             "raid": "noautodetect",
             "iommu": True,
+            "enable_pti": "on",
             "tsx": True,
             "grub_config_flags": {
                 "GRUB_TIMEOUT": "0",
@@ -261,7 +262,7 @@ class TestLib:
             "hugepagesz": "1G",
             "default-hugepagesz": "1G",
             "raid-autodetection": "noautodetect",
-            "enable-pti": True,
+            "enable-pti": "",
             "enable-iommu": True,
             "enable-tsx": True,
             "grub-config-flags": 'TEST_KEY="TEST VALUE, WITH COMMA", GRUB_TIMEOUT=0',
@@ -315,7 +316,7 @@ class TestLib:
             "hugepagesz": "",
             "default-hugepagesz": "",
             "raid-autodetection": "",
-            "enable-pti": True,
+            "enable-pti": "",
             "enable-iommu": False,
             "enable-tsx": False,
             "config-flags": "{ 'grub': 'GRUB_TIMEOUT=0, "
@@ -358,7 +359,7 @@ class TestLib:
             "hugepagesz": "1G",
             "default-hugepagesz": "1G",
             "raid-autodetection": "noautodetect",
-            "enable-pti": False,
+            "enable-pti": "off",
             "enable-iommu": True,
             "enable-tsx": True,
             "grub-config-flags": 'GRUB_TIMEOUT=0, TEST="one,two,three, four"',
@@ -377,7 +378,7 @@ class TestLib:
             "grub_config_flags": {"GRUB_TIMEOUT": "0", "TEST": '"one,two,three, four"'},
             "grub_default": "Advanced options for Ubuntu>Ubuntu, "
             "with Linux 4.15.0-38-generic",
-            "pti_off": True,
+            "enable_pti": "off",
         }
 
         sysh = lib_sysconfig.SysConfigHelper()

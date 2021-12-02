@@ -174,7 +174,7 @@ def update_status():
 
     if boot_changes:
         hookenv.status_set(
-            "active", "reboot required. Changes in: {}".format(", ".join(boot_changes))
+            "blocked", "reboot required. Changes in: {}".format(", ".join(boot_changes))
         )
     else:
         hookenv.status_set("active", "ready")

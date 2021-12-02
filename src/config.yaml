@@ -76,10 +76,12 @@ options:
         - 'noautodetect': autodetection is disabled
         - 'partitionable': all auto-detected arrays are assembled as partitionable
   enable-pti:
-    type: boolean
-    default: false
+    type: string
+    default: ""
     description: |
-        Allow enabling/disabling page table isolation, adding pti=off to grub cmdline
+        Allow enabling/disabling page table isolation, adding pti=on/off to grub cmdline
+        Allowed values are 'on' or 'off'. Default is unset, to have the upstream
+        configuration as the default.
   enable-iommu:
     type: boolean
     default: false

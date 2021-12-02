@@ -32,8 +32,8 @@ GRUB_CMDLINE_LINUX_DEFAULT="$GRUB_CMDLINE_LINUX_DEFAULT default_hugepagesz={{ de
 {% if raid is defined and raid -%}
 GRUB_CMDLINE_LINUX_DEFAULT="$GRUB_CMDLINE_LINUX_DEFAULT raid={{ raid }}"
 {% endif -%}
-{% if pti_off is defined and pti_off -%}
-GRUB_CMDLINE_LINUX_DEFAULT="$GRUB_CMDLINE_LINUX_DEFAULT pti=off"
+{% if enable_pti is defined and enable_pti -%}
+GRUB_CMDLINE_LINUX_DEFAULT="$GRUB_CMDLINE_LINUX_DEFAULT pti={{ enable_pti }}"
 {% endif -%}
 {% if iommu is defined and iommu -%}
 GRUB_CMDLINE_LINUX_DEFAULT="$GRUB_CMDLINE_LINUX_DEFAULT intel_iommu=on iommu=pt"

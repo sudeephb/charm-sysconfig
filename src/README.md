@@ -92,8 +92,10 @@ then applying that config using `sysctl -p <this file>`
 
 ## Enable Pti
 
-By default Page Table Isolation is disabled passing "pti=off" to the grub cmdline.
-Set to true to enable it.
+By default Page Table Isolation is unset, to have the upstream configuration
+as default. If the option is enabled by setting it to 'on', the charm is passing
+"pti=on" to the grub cmdline. Setting it to 'off' will disable it by passing
+"pti=off" to the grub cmdline.
 
 ## Enable Iommu
 
