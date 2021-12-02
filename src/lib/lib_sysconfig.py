@@ -384,7 +384,7 @@ class SysConfigHelper:
             if pti in ["on", "off"]:
                 context["enable_pti"] = pti
             else:
-                err_msg = f"'{pti}' is not a valid config option for enable-pti."
+                err_msg = "{} is not valid option for enable-pti.".format(pti)
                 hookenv.status_set("blocked", err_msg)
                 hookenv.log(err_msg, level=hookenv.ERROR)
         if self.enable_iommu:

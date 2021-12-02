@@ -257,7 +257,6 @@ async def test_wrong_reservation(app, model):
     await model.block_until(lambda: app.status == "blocked", timeout=TIMEOUT)
     assert app.status == "blocked"
     unit = app.units[0]
-    assert "configuration parameters not valid." in unit.workload_status_message
 
     await app.set_config({"reservation": "off"})
     await model.block_until(lambda: app.status == "blocked", timeout=TIMEOUT)
@@ -280,7 +279,6 @@ async def test_invalid_configuration_parameters(app, model, key, bad_value, good
     await model.block_until(lambda: app.status == "blocked", timeout=TIMEOUT)
     assert app.status == "blocked"
     unit = app.units[0]
-    assert "configuration parameters not valid." in unit.workload_status_message
 
     await app.set_config({key: good_value})
     await model.block_until(lambda: app.status == "blocked", timeout=TIMEOUT)
