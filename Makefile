@@ -10,6 +10,9 @@ endif
 ifndef CHARM_INTERFACES_DIR
 	CHARM_INTERFACES_DIR=${PROJECTPATH}/interfaces
 endif
+ifdef CONTAINER
+	BUILD_ARGS="--destructive-mode"
+endif
 METADATA_FILE="src/metadata.yaml"
 CHARM_NAME=$(shell cat ${PROJECTPATH}/${METADATA_FILE} | grep -E "^name:" | awk '{print $$2}')
 
@@ -23,7 +26,7 @@ help:
 	@echo " make build - build the charm"
 	@echo " make release - run clean, submodules, and build targets"
 	@echo " make lint - run flake8 and black --check"
-	@echo " make reformat - run black and isort and reformat files"
+	@echo " make black - run black and reformat files"
 	@echo " make proof - run charm proof"
 	@echo " make unittests - run the tests defined in the unittest subdirectory"
 	@echo " make functional - run the tests defined in the functional subdirectory"
@@ -32,31 +35,27 @@ help:
 
 clean:
 	@echo "Cleaning files"
-	@git clean -ffXd -e '!.idea' -e '!.venv'
+	@git clean -ffXd -e '!.idea'
 	@echo "Cleaning existing build"
 	@rm -rf ${CHARM_BUILD_DIR}/${CHARM_NAME}
-
-dev-environment:
-	@echo "Creating virtualenv"
-	@virtualenv -p python3 .venv
-	@.venv/bin/pip install -r requirements-dev.txt
-	@.venv/bin/pre-commit install
+	@charmcraft clean
+	@rm -rf ${PROJECTPATH}/${CHARM_NAME}*.charm
 
 submodules:
-	# @echo "Cloning submodules"
 	# @git submodule update --init --recursive
-	@echo "No submodules. Skipping"
+	@echo "No submodules. Skipping."
 
 submodules-update:
-	# @echo "Pulling latest updates for submodules"
 	# @git submodule update --init --recursive --remote --merge
-	@echo "No submodules. Skipping"
+	@echo "No submodules. Skipping."
 
-build:
+build: clean
 	@echo "Building charm to directory ${CHARM_BUILD_DIR}/${CHARM_NAME}"
 	@-git rev-parse --abbrev-ref HEAD > ./src/repo-info
-	@CHARM_LAYERS_DIR=${CHARM_LAYERS_DIR} CHARM_INTERFACES_DIR=${CHARM_INTERFACES_DIR} \
-		TERM=linux CHARM_BUILD_DIR=${CHARM_BUILD_DIR} charm build src/
+	@charmcraft -v pack ${BUILD_ARGS}
+	@bash -c ./rename.sh
+	@mkdir -p ${CHARM_BUILD_DIR}/${CHARM_NAME}
+	@unzip ${PROJECTPATH}/${CHARM_NAME}.charm -d ${CHARM_BUILD_DIR}/${CHARM_NAME}
 
 release: clean build
 	@echo "Charm is built at ${CHARM_BUILD_DIR}/${CHARM_NAME}"
@@ -64,10 +63,6 @@ release: clean build
 lint:
 	@echo "Running lint checks"
 	@cd src && tox -e lint
-
-reformat:
-	@echo "Reformat files with black and isort"
-	@cd src && tox -e reformat
 
 black:
 	@echo "Reformat files with black"
@@ -83,13 +78,10 @@ unittests:
 
 functional: build
 	@echo "Executing functional tests in ${CHARM_BUILD_DIR}"
-	@cd src && CHARM_BUILD_DIR=${CHARM_BUILD_DIR} tox -e func
+	@cd src && CHARM_LOCATION=${PROJECTPATH} tox -e func
 
 test: lint proof unittests functional
 	@echo "Tests completed for charm ${CHARM_NAME}."
 
-pre-commit:
-	@cd src && tox -e pre-commit
-
 # The targets below don't depend on a file
-.PHONY: help submodules submodules-update clean build release lint reformat proof unittests functional test
+.PHONY: help submodules submodules-update clean build release lint black proof unittests functional test
