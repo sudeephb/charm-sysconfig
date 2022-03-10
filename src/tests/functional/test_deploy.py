@@ -11,12 +11,12 @@ import websockets
 # Treat all tests as coroutines
 pytestmark = pytest.mark.asyncio
 
-charm_build_dir = os.getenv("CHARM_BUILD_DIR", "..").rstrip("/")
+charm_location = os.getenv("CHARM_LOCATION", "..").rstrip("/")
 charm_name = os.getenv("CHARM_NAME", "sysconfig")
 
 series = ["focal", "bionic", "xenial"]
 
-sources = [("local", "{}/{}".format(charm_build_dir, charm_name))]
+sources = [("local", "{}/{}.charm".format(charm_location, charm_name))]
 
 TIMEOUT = 600
 MODEL_ACTIVE_TIMEOUT = 10
