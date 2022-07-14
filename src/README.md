@@ -161,7 +161,7 @@ With the new release default behaviour has changed.
 To produce same configuration as was before default behaviour use the following configuration:
 
 sysconfig:
-    charm: cs:~canonical-bootstack/xenial/sysconfig
+    charm: sysconfig
     options:
         raid-autodetection: "noautodetect"
         enable-iommu: true
