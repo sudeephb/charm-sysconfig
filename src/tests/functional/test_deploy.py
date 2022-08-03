@@ -14,7 +14,7 @@ pytestmark = pytest.mark.asyncio
 charm_location = os.getenv("CHARM_LOCATION", "..").rstrip("/")
 charm_name = os.getenv("CHARM_NAME", "sysconfig")
 
-series = ["focal", "bionic", "xenial"]
+series = ["jammy", "focal", "bionic", "xenial"]
 
 sources = [("local", "{}/{}.charm".format(charm_location, charm_name))]
 
@@ -63,7 +63,7 @@ async def test_sysconfig_deploy(model, series, source, request):
     principal_app_name = PRINCIPAL_APP_NAME.format(series)
 
     ubuntu_app = await model.deploy(
-        "cs:ubuntu", application_name=principal_app_name, series=series, channel=channel
+        "ubuntu", application_name=principal_app_name, series=series, channel=channel
     )
 
     await model.block_until(lambda: ubuntu_app.status == "active", timeout=TIMEOUT)
