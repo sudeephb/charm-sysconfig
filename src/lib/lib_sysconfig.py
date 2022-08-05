@@ -67,6 +67,42 @@ def boot_time():
         return boot_time
 
 
+def check_update_grub():
+    """Check if an update to /boot/grub/grub.cfg is available."""
+    tmp_output = "/tmp/tmp_grub.cfg"
+    try:
+        subprocess.check_output(
+            "grub-mkconfig -o {}".format(tmp_output),
+            stderr=subprocess.STDOUT,
+            shell=True,
+        )
+    except subprocess.CalledProcessError as e:
+        hookenv.log("Unable to dry-run update-grub.", hookenv.WARNING)
+        return False
+
+    try:
+        subprocess.check_output(
+            "/usr/bin/diff /boot/grub/grub.cfg {}".format(tmp_output),
+            stderr=subprocess.STDOUT,
+            shell=True,
+        )
+    except subprocess.CalledProcessError as e:
+        exit_code = e.returncode
+        if exit_code == 1:
+            hookenv.log(
+                "Found available grub updates. You can run "
+                "`juju run-action <sysconfig-unit> update-grub` to update grub.",
+                hookenv.INFO,
+            )
+            return True
+        else:
+            hookenv.log("Unable to check available grub updates.", hookenv.INFO)
+            return False
+    else:
+        hookenv.log("No available grub updates found.", hookenv.INFO)
+        return False
+
+
 class BootResourceState:
     """A class to track resources changed since last reboot."""
 

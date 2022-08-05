@@ -35,6 +35,7 @@ from lib_sysconfig import (
     SYSTEMD_RESOLVED,
     SYSTEMD_SYSTEM,
     SysConfigHelper,
+    check_update_grub,
 )
 
 
@@ -174,9 +175,14 @@ def update_status():
     )
 
     if boot_changes:
+        # Try rebooting first since reboot will always clear such message.
         hookenv.status_set(
             "blocked", "reboot required. Changes in: {}".format(", ".join(boot_changes))
         )
+    elif check_update_grub():
+        # Then try to dry-run update-grub to see if it is required to run.
+        # Addressing #1895189.
+        hookenv.status_set("blocked", "update-grub required.")
     else:
         hookenv.status_set("active", "ready")
 
