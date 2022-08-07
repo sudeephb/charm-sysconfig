@@ -155,6 +155,8 @@ async def test_config_changed(app, model, jujutools):
         # released, as normal installations
         # will updated to newest available
         kernel_version = "5.4.0-29-generic"
+    elif "jammy" in app.entity_id:
+        kernel_version = "5.15.0-27-generic"
     linux_pkg = "linux-image-{}".format(kernel_version)
     linux_modules_extra_pkg = "linux-modules-extra-{}".format(kernel_version)
 
