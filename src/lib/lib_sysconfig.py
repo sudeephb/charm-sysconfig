@@ -76,7 +76,7 @@ def check_update_grub():
             stderr=subprocess.STDOUT,
             shell=True,
         )
-    except subprocess.CalledProcessError as e:
+    except subprocess.CalledProcessError:
         hookenv.log("Unable to dry-run update-grub.", hookenv.WARNING)
         return False
 
@@ -86,9 +86,8 @@ def check_update_grub():
             stderr=subprocess.STDOUT,
             shell=True,
         )
-    except subprocess.CalledProcessError as e:
-        exit_code = e.returncode
-        if exit_code == 1:
+    except subprocess.CalledProcessError as err:
+        if err.returncode == 1:
             hookenv.log(
                 "Found available grub updates. You can run "
                 "`juju run-action <sysconfig-unit> update-grub` to update grub.",
