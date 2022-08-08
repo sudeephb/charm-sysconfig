@@ -6,6 +6,7 @@ import re
 import subprocess
 
 import pytest
+import pytest_asyncio
 import websockets
 
 # Treat all tests as coroutines
@@ -34,19 +35,19 @@ PRINCIPAL_APP_NAME = "ubuntu-{}"
 
 
 # Custom fixtures
-@pytest.fixture(params=series)
+@pytest_asyncio.fixture(params=series)
 def series(request):
     """Return ubuntu version (i.e. xenial) in use in the test."""
     return request.param
 
 
-@pytest.fixture(params=sources, ids=[s[0] for s in sources])
+@pytest_asyncio.fixture(params=sources, ids=[s[0] for s in sources])
 def source(request):
     """Return source of the charm under test (i.e. local, cs)."""
     return request.param
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def app(model, series, source):
     """Return application of the charm under test."""
     app_name = "sysconfig-{}-{}".format(series, source[0])
