@@ -28,11 +28,7 @@ tags:
   - performance
   - affinity
   - isolcpus
-series:
-  - jammy
-  - focal
-  - bionic
-  - xenial
+series: []
 subordinate: true
 requires:
   juju-info:
