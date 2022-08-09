@@ -204,6 +204,11 @@ async def test_config_changed(app, model, jujutools):
     assert "GRUB_TIMEOUT=10" in grub_content
     assert "TEST=test" not in grub_content
 
+    # test check_update_grub shows that update-grub is required.
+    action = await unit.run_action("check-update-grub")
+    action = await action.wait()
+    assert "update-grub required." in action.results["Stdout"]
+
     # Reconfiguring reservation from isolcpus to affinity
     # isolcpus will be removed from grub and affinity added to systemd
 
@@ -243,6 +248,14 @@ async def test_config_changed(app, model, jujutools):
 
     # test update-status show that reboot is required
     assert "reboot required." in unit.workload_status_message
+
+
+async def test_check_update_grub(app):
+    """Tests that check-update-grub action complete."""
+    unit = app.units[0]
+    action = await unit.run_action("check-update-grub")
+    action = await action.wait()
+    assert action.status == "completed"
 
 
 async def test_clear_notification(app):
