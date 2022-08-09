@@ -1,7 +1,5 @@
 #!/usr/local/sbin/charm-env python3
 
-import sys
-
 from lib_sysconfig import check_update_grub
 
 from charmhelpers.core import hookenv
@@ -10,10 +8,10 @@ from charmhelpers.core import hookenv
 def main():
     hookenv.log("Dry-running update-grub to check any available grub conf updates.", hookenv.DEBUG)
     available = check_update_grub()
+    message = "nothing to be updated."
     if available:
-        return "update-grub required."
-    return "nothing to be updated."
+        message = "update-grub required."
+    hookenv.action_set({"message": message})
 
 if __name__ == "__main__":
-    print(main())
-    sys.exit(0)
+    main()

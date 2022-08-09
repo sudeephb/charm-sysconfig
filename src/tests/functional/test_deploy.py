@@ -207,7 +207,7 @@ async def test_config_changed(app, model, jujutools):
     # test check_update_grub shows that update-grub is required.
     action = await unit.run_action("check-update-grub")
     action = await action.wait()
-    assert "update-grub required." in action.results["Stdout"]
+    assert "update-grub required." in action.results["message"]
 
     # Reconfiguring reservation from isolcpus to affinity
     # isolcpus will be removed from grub and affinity added to systemd
