@@ -64,6 +64,7 @@ def install_sysconfig():
     syshelper.update_systemd_system_file()
     syshelper.update_systemd_resolved()
     syshelper.update_irqbalance()
+    syshelper.update_sysctl()
     set_flag("sysconfig.installed")
     update_status()
 

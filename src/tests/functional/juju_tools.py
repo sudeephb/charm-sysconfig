@@ -64,6 +64,17 @@ class JujuTools:
         print("Calling remote cmd: " + python_cmd)
         return await self.remote_object(imports, python_cmd, target)
 
+    async def file_exists(self, path, target):
+        """Run os.path.isfile() on a file.
+
+        :param path: File path
+        :param target: Unit object or unit name string
+        """
+        imports = "import os;"
+        python_cmd = 'os.path.isfile("{}")'.format(path)
+        print("Calling remote cmd: " + python_cmd)
+        return await self.remote_object(imports, python_cmd, target)
+
     async def file_contents(self, path, target):
         """Return the contents of a file.
 
