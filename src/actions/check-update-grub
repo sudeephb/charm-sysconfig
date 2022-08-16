@@ -6,11 +6,7 @@ from charmhelpers.core import hookenv
 
 
 def main():
-    hookenv.log("Dry-running update-grub to check any available grub conf updates.", hookenv.DEBUG)
-    available = check_update_grub()
-    message = "nothing to be updated."
-    if available:
-        message = "update-grub required."
+    _, message = check_update_grub()
     hookenv.action_set({"message": message})
 
 if __name__ == "__main__":

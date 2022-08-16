@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 """Unit tests for SysConfigHelper and BootResourceState classes."""
+import filecmp
 import subprocess
 import unittest.mock as mock
 from datetime import datetime, timedelta, timezone
@@ -9,26 +10,30 @@ import lib_sysconfig
 import pytest
 
 
-@mock.patch("lib_sysconfig.dry_run_update_grub")
+@mock.patch("filecmp.cmp")
 @mock.patch("lib_sysconfig.subprocess.check_output")
-def test_check_update_grub(check_output, dry_run_update_grub):
+def test_check_update_grub(check_output, cmp_file):
     """Test check_update_grub function."""
     tmp_output = "/tmp/tmp_grub.cfg"
 
-    dry_run_update_grub.return_value = True
-    available = lib_sysconfig.check_update_grub()
-    check_output.assert_called_with(
-        "/usr/bin/diff /boot/grub/grub.cfg {}".format(tmp_output),
-        stderr=subprocess.STDOUT,
-        shell=True,
-    )
+    # test grub config error
+    check_output.side_effect = subprocess.CalledProcessError(1, "grub-mkconfig")
+    update_available, message = lib_sysconfig.check_update_grub(tmp_output)
+    assert update_available == False
+    assert "Unable to check update-grub" in message
+    check_output.side_effect = None
 
-    check_output.reset_mock()
+    # test grub config update available
+    cmp_file.return_value = False
+    update_available, message = lib_sysconfig.check_update_grub(tmp_output)
+    assert "Found available grub updates." in message
+    assert update_available == True
 
-    dry_run_update_grub.return_value = False
-    available = lib_sysconfig.check_update_grub()
-    check_output.assert_not_called()
-    assert available == False
+    # test grub config update unavailable
+    cmp_file.return_value = True
+    update_available, message = lib_sysconfig.check_update_grub(tmp_output)
+    assert update_available == False
+    assert "No available grub updates found." in message
 
 
 class TestBootResourceState:

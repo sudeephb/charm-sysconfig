@@ -174,17 +174,24 @@ def update_status():
         resources
     )
 
-    if boot_changes:
-        # Try rebooting first since reboot will always clear such message.
-        hookenv.status_set(
-            "blocked", "reboot required. Changes in: {}".format(", ".join(boot_changes))
-        )
-    elif check_update_grub():
-        # Then try to dry-run update-grub to see if it is required to run.
-        # Addressing #1895189.
-        hookenv.status_set("blocked", "update-grub required.")
+    config = hookenv.config()
+    if not config["update-grub"]:
+        grub_update_available, _ = check_update_grub()
     else:
-        hookenv.status_set("active", "ready")
+        # if update-grub is set to true, then no need to check for grub update
+        # since it will be applied automatically.
+        grub_update_available = False
+
+    status = "active"
+    message = "ready"
+    if boot_changes:
+        status = "blocked"
+        message = "reboot required. Changes in: {}".format(", ".join(boot_changes))
+        # if update-grub is set to false and there is an update to grub config,
+        # then add more info to the status message. (addressing #1895189)
+        if grub_update_available:
+            message = "update-grub and " + message
+    hookenv.status_set(status, message)
 
 
 @when("config.changed.enable-container")

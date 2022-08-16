@@ -2,6 +2,7 @@
 
 Manage grub, systemd, coufrequtils and kernel version configuration.
 """
+import filecmp
 import hashlib
 import os
 import subprocess
@@ -67,8 +68,16 @@ def boot_time():
         return boot_time
 
 
-def dry_run_update_grub(tmp_output="/tmp/tmp_grub.cfg"):
-    """Dry run update-grub to check if an update to /boot/grub/grub.cfg is available."""
+def check_update_grub(tmp_output="/tmp/tmp_grub.cfg"):
+    """Check if an update to /boot/grub/grub.cfg is available."""
+    # Some sensible default values
+    update_available = False
+    message = "No available grub updates found."
+
+    # Check for grub config update.
+    hookenv.log(
+        "Checking if an update to /boot/grub/grub.cfg is available.", hookenv.DEBUG
+    )
     try:
         subprocess.check_output(
             "grub-mkconfig -o {}".format(tmp_output),
@@ -76,35 +85,20 @@ def dry_run_update_grub(tmp_output="/tmp/tmp_grub.cfg"):
             shell=True,
         )
     except subprocess.CalledProcessError as err:
-        hookenv.log("Unable to dry-run update-grub: {}".format(err), hookenv.WARNING)
-        return False
-    return True
-
-
-def check_update_grub():
-    """Check if an update to /boot/grub/grub.cfg is available."""
-    is_update_available = False
-    tmp_output = "/tmp/tmp_grub.cfg"
-    if dry_run_update_grub(tmp_output=tmp_output):
-        try:
-            subprocess.check_output(
-                "/usr/bin/diff /boot/grub/grub.cfg {}".format(tmp_output),
-                stderr=subprocess.STDOUT,
-                shell=True,
+        update_available = False
+        message = "Unable to check update-grub: {}".format(err)
+    else:
+        if not filecmp.cmp("/boot/grub/grub.cfg", tmp_output):
+            update_available = True
+            message = (
+                "Found available grub updates. You can run "
+                "`juju run-action <sysconfig-unit> update-grub` to update grub."
             )
-        except subprocess.CalledProcessError as err:
-            if err.returncode == 1:
-                hookenv.log(
-                    "Found available grub updates. You can run "
-                    "`juju run-action <sysconfig-unit> update-grub` to update grub.",
-                    hookenv.INFO,
-                )
-                is_update_available = True
-            else:
-                hookenv.log("Unable to check available grub updates.", hookenv.INFO)
         else:
-            hookenv.log("No available grub updates found.", hookenv.INFO)
-    return is_update_available
+            update_available = False
+            message = "No available grub updates found."
+    hookenv.log(message, hookenv.DEBUG)
+    return update_available, message
 
 
 class BootResourceState:
