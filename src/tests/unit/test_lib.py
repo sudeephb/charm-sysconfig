@@ -12,24 +12,35 @@ import pytest
 
 @mock.patch("filecmp.cmp")
 @mock.patch("lib_sysconfig.subprocess.check_output")
-def test_check_update_grub(check_output, cmp_file):
-    """Test check_update_grub function."""
+def test_check_update_grub_error(check_output, cmp_file):
+    """Test check_update_grub function when error occurs."""
     tmp_output = "/tmp/tmp_grub.cfg"
 
-    # test grub config error
     check_output.side_effect = subprocess.CalledProcessError(1, "grub-mkconfig")
     update_available, message = lib_sysconfig.check_update_grub(tmp_output)
     assert update_available == False
     assert "Unable to check update-grub" in message
     check_output.side_effect = None
 
-    # test grub config update available
+
+@mock.patch("filecmp.cmp")
+@mock.patch("lib_sysconfig.subprocess.check_output")
+def test_check_update_grub_available(check_output, cmp_file):
+    """Test check_update_grub function when grub update available."""
+    tmp_output = "/tmp/tmp_grub.cfg"
+
     cmp_file.return_value = False
     update_available, message = lib_sysconfig.check_update_grub(tmp_output)
     assert "Found available grub updates." in message
     assert update_available == True
 
-    # test grub config update unavailable
+
+@mock.patch("filecmp.cmp")
+@mock.patch("lib_sysconfig.subprocess.check_output")
+def test_check_update_grub_unavailable(check_output, cmp_file):
+    """Test check_update_grub function when grub update unavailable."""
+    tmp_output = "/tmp/tmp_grub.cfg"
+
     cmp_file.return_value = True
     update_available, message = lib_sysconfig.check_update_grub(tmp_output)
     assert update_available == False
