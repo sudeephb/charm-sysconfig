@@ -13,7 +13,6 @@ import os
 import subprocess
 import uuid
 
-import pytest
 import pytest_asyncio
 from juju.controller import Controller
 from juju_tools import JujuTools

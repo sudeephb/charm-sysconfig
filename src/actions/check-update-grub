@@ -1,8 +1,7 @@
 #!/usr/local/sbin/charm-env python3
 
-from lib_sysconfig import check_update_grub
-
 from charmhelpers.core import hookenv
+from lib_sysconfig import check_update_grub
 
 
 def main():

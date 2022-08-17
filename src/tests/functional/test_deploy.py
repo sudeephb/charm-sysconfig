@@ -127,7 +127,7 @@ async def test_default_config(app, jujutools):
     assert "GRUB_DEFAULT" not in grub_content
     assert "default_hugepagesz" not in grub_content
 
-    sysctl_path = '/etc/sysctl.d/90-charm-sysconfig.conf'
+    sysctl_path = "/etc/sysctl.d/90-charm-sysconfig.conf"
     sysctl_exists = await jujutools.file_exists(sysctl_path, unit)
     assert sysctl_exists
 
