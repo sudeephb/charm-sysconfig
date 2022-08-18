@@ -2,6 +2,7 @@
 
 Manage grub, systemd, coufrequtils and kernel version configuration.
 """
+import filecmp
 import hashlib
 import os
 import subprocess
@@ -65,6 +66,39 @@ def boot_time():
         uptime_seconds = float(f.readline().split()[0])
         boot_time = datetime.now(timezone.utc) - timedelta(seconds=uptime_seconds)
         return boot_time
+
+
+def check_update_grub(tmp_output="/tmp/tmp_grub.cfg"):
+    """Check if an update to /boot/grub/grub.cfg is available."""
+    # Some sensible default values
+    update_available = False
+    message = "No available grub updates found."
+
+    # Check for grub config update.
+    hookenv.log(
+        "Checking if an update to /boot/grub/grub.cfg is available.", hookenv.DEBUG
+    )
+    try:
+        subprocess.check_output(
+            "grub-mkconfig -o {}".format(tmp_output),
+            stderr=subprocess.STDOUT,
+            shell=True,
+        )
+    except subprocess.CalledProcessError as err:
+        update_available = False
+        message = "Unable to check update-grub: {}".format(err)
+    else:
+        if not filecmp.cmp("/boot/grub/grub.cfg", tmp_output):
+            update_available = True
+            message = (
+                "Found available grub updates. You can run "
+                "`juju run-action <sysconfig-unit> update-grub` to update grub."
+            )
+        else:
+            update_available = False
+            message = "No available grub updates found."
+    hookenv.log(message, hookenv.DEBUG)
+    return update_available, message
 
 
 class BootResourceState:

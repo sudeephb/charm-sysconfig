@@ -1,0 +1,12 @@
+#!/usr/local/sbin/charm-env python3
+
+from charmhelpers.core import hookenv
+from lib_sysconfig import check_update_grub
+
+
+def main():
+    _, message = check_update_grub()
+    hookenv.action_set({"message": message})
+
+if __name__ == "__main__":
+    main()

@@ -127,7 +127,7 @@ async def test_default_config(app, jujutools):
     assert "GRUB_DEFAULT" not in grub_content
     assert "default_hugepagesz" not in grub_content
 
-    sysctl_path = '/etc/sysctl.d/90-charm-sysconfig.conf'
+    sysctl_path = "/etc/sysctl.d/90-charm-sysconfig.conf"
     sysctl_exists = await jujutools.file_exists(sysctl_path, unit)
     assert sysctl_exists
 
@@ -241,8 +241,18 @@ async def test_config_changed(app, model, jujutools):
     irqbalance_content = await jujutools.file_contents(irqbalance_path, unit)
     assert "IRQBALANCE_BANNED_CPUS=3000030000300003" in irqbalance_content
 
-    # test update-status show that reboot is required
-    assert "reboot required." in unit.workload_status_message
+    # test update-status show that update-grub and reboot is required, since
+    # "grub-config-flags" is changed and "update-grub" is set to false by
+    # default.
+    assert "update-grub and reboot required." in unit.workload_status_message
+
+
+async def test_check_update_grub(app):
+    """Tests that check-update-grub action complete."""
+    unit = app.units[0]
+    action = await unit.run_action("check-update-grub")
+    action = await action.wait()
+    assert action.status == "completed"
 
 
 async def test_clear_notification(app):

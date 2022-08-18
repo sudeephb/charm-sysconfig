@@ -35,6 +35,7 @@ from lib_sysconfig import (
     SYSTEMD_RESOLVED,
     SYSTEMD_SYSTEM,
     SysConfigHelper,
+    check_update_grub,
 )
 
 
@@ -173,12 +174,24 @@ def update_status():
         resources
     )
 
-    if boot_changes:
-        hookenv.status_set(
-            "blocked", "reboot required. Changes in: {}".format(", ".join(boot_changes))
-        )
+    config = hookenv.config()
+    if not config["update-grub"]:
+        grub_update_available, _ = check_update_grub()
     else:
-        hookenv.status_set("active", "ready")
+        # if update-grub is set to true, then no need to check for grub update
+        # since it will be applied automatically.
+        grub_update_available = False
+
+    status = "active"
+    message = "ready"
+    if boot_changes:
+        status = "blocked"
+        message = "reboot required. Changes in: {}".format(", ".join(boot_changes))
+        # if update-grub is set to false and there is an update to grub config,
+        # then add more info to the status message. (addressing #1895189)
+        if grub_update_available:
+            message = "update-grub and " + message
+    hookenv.status_set(status, message)
 
 
 @when("config.changed.enable-container")
