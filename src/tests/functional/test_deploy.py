@@ -15,7 +15,7 @@ pytestmark = pytest.mark.asyncio
 charm_location = os.getenv("CHARM_LOCATION", "..").rstrip("/")
 charm_name = os.getenv("CHARM_NAME", "sysconfig")
 
-series = ["jammy", "focal", "bionic", "xenial"]
+series = ["jammy", "focal", "bionic"]  #, "xenial"]
 
 sources = [("local", "{}/{}.charm".format(charm_location, charm_name))]
 
