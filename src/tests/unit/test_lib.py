@@ -304,6 +304,7 @@ class TestLib:
             "grub-config-flags": 'TEST_KEY="TEST VALUE, WITH COMMA", GRUB_TIMEOUT=0',
             "kernel-version": "4.15.0-38-generic",
             "update-grub": True,
+            "isolcpus": "",
         }
 
         expected = {
@@ -427,6 +428,56 @@ class TestLib:
         )
         check_call.assert_not_called()
 
+    @mock.patch("lib_sysconfig.subprocess.check_call")
+    @mock.patch("lib_sysconfig.hookenv.config")
+    @mock.patch("lib_sysconfig.hookenv.log")
+    @mock.patch("lib_sysconfig.render")
+    def test_update_grub_file_no_update_grub_deprecate(
+        self, render, log, config, check_call
+    ):
+        """Update /etc/default/grub.d/90-sysconfig.cfg and update-grub false.
+
+        Expect file is rendered with correct config and updated-grub is not called.
+        """
+        config.return_value = {
+            "reservation": "isolcpus",
+            "cpu-range": "0-5",
+            "isolcpus": "0-10",
+            "hugepages": "400",
+            "hugepagesz": "1G",
+            "default-hugepagesz": "1G",
+            "raid-autodetection": "noautodetect",
+            "enable-pti": "off",
+            "enable-iommu": True,
+            "enable-tsx": True,
+            "grub-config-flags": 'GRUB_TIMEOUT=0, TEST="one,two,three, four"',
+            "kernel-version": "4.15.0-38-generic",
+            "update-grub": False,
+        }
+
+        expected = {
+            "isolcpus": "0-10",
+            "hugepages": "400",
+            "hugepagesz": "1G",
+            "default_hugepagesz": "1G",
+            "raid": "noautodetect",
+            "iommu": True,
+            "tsx": True,
+            "grub_config_flags": {"GRUB_TIMEOUT": "0", "TEST": '"one,two,three, four"'},
+            "grub_default": "Advanced options for Ubuntu>Ubuntu, "
+            "with Linux 4.15.0-38-generic",
+            "enable_pti": "off",
+        }
+
+        sysh = lib_sysconfig.SysConfigHelper()
+        sysh.update_grub_file()
+        render.assert_called_with(
+            source=lib_sysconfig.GRUB_CONF_TMPL,
+            target=lib_sysconfig.GRUB_CONF,
+            templates_dir="templates",
+            context=expected,
+        )
+
     @mock.patch("lib_sysconfig.hookenv.config")
     @mock.patch("lib_sysconfig.hookenv.log")
     @mock.patch("lib_sysconfig.render")
@@ -461,6 +512,38 @@ class TestLib:
     @mock.patch("lib_sysconfig.hookenv.config")
     @mock.patch("lib_sysconfig.hookenv.log")
     @mock.patch("lib_sysconfig.render")
+    def test_update_systemd_system_file_deprecate(self, render, log, config):
+        """Update /etc/default/grub.d/90-sysconfig.cfg and update-grub false.
+
+        Expect file is rendered with correct config and updated-grub is not called.
+        """
+        config.return_value = {
+            "reservation": "affinity",
+            "cpu-range": "0-5",
+            "cpu-affinity-range": "0-10",
+            "systemd-config-flags": "DefaultLimitRTTIME=1,DefaultTasksMax=10",
+        }
+
+        expected = {
+            "cpu_affinity_range": "0-10",
+            "systemd_config_flags": {
+                "DefaultLimitRTTIME": "1",
+                "DefaultTasksMax": "10",
+            },
+        }
+
+        sysh = lib_sysconfig.SysConfigHelper()
+        sysh.update_systemd_system_file()
+        render.assert_called_with(
+            source=lib_sysconfig.SYSTEMD_SYSTEM_TMPL,
+            target=lib_sysconfig.SYSTEMD_SYSTEM,
+            templates_dir="templates",
+            context=expected,
+        )
+
+    @mock.patch("lib_sysconfig.hookenv.config")
+    @mock.patch("lib_sysconfig.hookenv.log")
+    @mock.patch("lib_sysconfig.render")
     def test_update_systemd_system_legacy_reservation(self, render, log, config):
         """Update /etc/default/grub.d/90-sysconfig.cfg and update-grub false.
 
@@ -470,6 +553,7 @@ class TestLib:
             "reservation": "affinity",
             "cpu-range": "0-10",
             "systemd-config-flags": "DefaultLimitRTTIME=1,DefaultTasksMax=10",
+            "cpu-affinity-range": "",
         }
 
         expected = {

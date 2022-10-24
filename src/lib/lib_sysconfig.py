@@ -225,7 +225,11 @@ class SysConfigHelper:
     @property
     def cpu_affinity_range(self):
         """Return cpu-affinity-range config."""
-        if self.reservation == "affinity" and self.cpu_range:
+        if (
+            self.charm_config["cpu-affinity-range"] == ""
+            and self.reservation == "affinity"
+            and self.cpu_range
+        ):
             return self.cpu_range
         return self.charm_config["cpu-affinity-range"]
 
@@ -256,7 +260,11 @@ class SysConfigHelper:
     @property
     def isolcpus(self):
         """Return isolcpus config."""
-        if self.reservation == "isolcpus" and self.cpu_range:
+        if (
+            self.charm_config["isolcpus"] == ""
+            and self.reservation == "isolcpus"
+            and self.cpu_range
+        ):
             return self.cpu_range
         return self.charm_config["isolcpus"]
 
