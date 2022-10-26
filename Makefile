@@ -23,7 +23,7 @@ help:
 	@echo " make clean - remove unneeded files and clean charmcraft environment"
 	@echo " make build - build the charm"
 	@echo " make proof - run charm proof"
-	@echo " make release - run clean, build and proof target and upload charm to channel"
+	@echo " make release - run clean, build, proof target and upload charm"
 	@echo " make lint - run flake8, black --check and isort --check"
 	@echo " make reformat - run black and isort and reformat files"
 	@echo " make unittests - run the tests defined in the unittest subdirectory"
@@ -65,10 +65,9 @@ proof: build
 	@mkdir -p ${CHARM_BUILD_DIR}/${CHARM_NAME}
 	@unzip ${PROJECTPATH}/${CHARM_NAME}.charm -d ${CHARM_BUILD_DIR}/${CHARM_NAME}
 	@charm proof ${CHARM_BUILD_DIR}/${CHARM_NAME}
-
 release: proof
 	@echo "Releasing charm to ${RELEASE_CHANNEL} channel"
-	@charmcraft upload nrpe.charm --release ${RELEASE_CHANNEL}
+	@charmcraft upload ${CHARM_NAME}.charm --release ${RELEASE_CHANNEL}
 
 lint:
 	@echo "Running lint checks"
