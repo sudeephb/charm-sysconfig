@@ -3,7 +3,7 @@
 # within individual charm repos. https://launchpad.net/bootstack-charms-spec
 
 [tool.flake8]
-ignore = ["D100", "D101", "D102", "D103"]
+ignore = ["D100", "D101", "D102", "D103", "W503", "W504"]
 exclude = ['.eggs', '.git', '.tox', '.venv', '.build', 'report']
 max-line-length = 88
 max-complexity = 10
