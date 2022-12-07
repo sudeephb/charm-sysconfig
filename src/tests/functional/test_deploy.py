@@ -263,6 +263,15 @@ async def test_clear_notification(app):
     assert action.status == "completed"
 
 
+async def test_clear_notification_persist_after_update_status(app, model):
+    """Tests that clear-notification action complete."""
+    unit = app.units[0]
+    action = await unit.run_action("clear-notification")
+    action = await action.wait()
+    action = await unit.run("./hooks/unpdate-status")
+    await model.block_until(lambda: app.status == "active", timeout=TIMEOUT)
+
+
 # This may need to be removed at some point once the reservation
 # variable gets removed
 async def test_wrong_reservation(app, model):

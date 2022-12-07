@@ -68,6 +68,14 @@ def boot_time():
         return boot_time
 
 
+def clear_notification_time():
+    """Return timestamp of last clear-notification run."""
+    clear_notification_timestamp = unitdata.kv().get("clear-notification-timestamp")
+    if not clear_notification_timestamp:
+        return None
+    return datetime.fromordinal(clear_notification_timestamp)
+
+
 def check_update_grub(tmp_output="/tmp/tmp_grub.cfg"):
     """Check if an update to /boot/grub/grub.cfg is available."""
     # Some sensible default values
@@ -99,6 +107,18 @@ def check_update_grub(tmp_output="/tmp/tmp_grub.cfg"):
             message = "No available grub updates found."
     hookenv.log(message, hookenv.DEBUG)
     return update_available, message
+
+
+def clear_notification():
+    """Clear unit's status from any messages.
+
+    Save JSON-compatible float timestamp in charm kv storage
+    to update time of last `clear-notifications` juju action run.
+    """
+    timestamp = datetime.now(timezone.utc)
+    unitdata.kv().set("clear-notification-timestamp", timestamp.timestamp())
+    message = "Notifications cleared at {}".format(timestamp.isoformat())
+    hookenv.log(message, hookenv.DEBUG)
 
 
 class BootResourceState:
@@ -172,14 +192,26 @@ class BootResourceState:
     def resources_changed_since_boot(self, resource_names):
         """Given a list of resource names return those that have changed since boot.
 
+        Get the time for the last reboot and the last run of juju action
+        `clear-notification`. For every resource from `resource_names` check the last
+        update time. If the resource was updated after the reboot, and no
+        `clear-notification` action was run after the change, then add the resource to
+        the return list.
+
         :param resource_names: list of names
         :return: list of names
         """
         boot_ts = boot_time()
+        clear_notification_ts = clear_notification_time()
+        if clear_notification_ts:
+            acknowledged_ts = max(boot_ts, clear_notification_ts)
+        else:
+            acknowledged_ts = boot_ts
+
         time_changed = [
             name
             for name in resource_names
-            if boot_ts < self.get_resource_changed_timestamp(name)
+            if acknowledged_ts < self.get_resource_changed_timestamp(name)
         ]
 
         csum_changed = [name for name in resource_names if self.checksum_changed(name)]

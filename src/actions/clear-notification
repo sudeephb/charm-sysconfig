@@ -1,5 +1,12 @@
 #!/usr/local/sbin/charm-env python3
 
-from charmhelpers.core.hookenv import status_set
+from charmhelpers.core import hookenv
+from lib_sysconfig import clear_notification
 
-status_set('active', 'ready')
+
+def main():
+    clear_notification()
+    hookenv.status_set('active', 'ready')
+
+if __name__ == "__main__":
+    main()
