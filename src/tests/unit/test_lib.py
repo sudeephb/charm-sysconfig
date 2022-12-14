@@ -141,6 +141,23 @@ class TestBootResourceState:
                 changed = boot_resource.resources_changed_since_boot([ftmp.name])
                 assert changed
 
+    @mock.patch("lib_sysconfig.clear_notification_time")
+    @mock.patch("lib_sysconfig.boot_time")
+    def test_resources_changed_before_clear_notification(
+        self, mock_boot_time, mock_clear_notification_time
+    ):
+        """Test resources change happened before `clear-notifications` action run."""
+        mock_boot_time.return_value = self.datetime - timedelta(1)
+        mock_clear_notification_time.return_value = self.datetime + timedelta(1)
+        boot_resource = self.boot_resource()
+        with NamedTemporaryFile() as ftmp:
+            with mock.patch.object(
+                boot_resource, "calculate_resource_sha256sum"
+            ) as mock_calc:
+                mock_calc.return_value = "2345"
+                changed = boot_resource.resources_changed_since_boot([ftmp.name])
+                assert not changed
+
 
 class TestLib:
     """Module to test SysConfigHelper lib."""
