@@ -73,7 +73,7 @@ def clear_notification_time():
     clear_notification_timestamp = unitdata.kv().get("clear-notification-timestamp")
     if not clear_notification_timestamp:
         return None
-    return datetime.fromordinal(clear_notification_timestamp)
+    return datetime.fromtimestamp(clear_notification_timestamp, tz=timezone.utc)
 
 
 def check_update_grub(tmp_output="/tmp/tmp_grub.cfg"):
@@ -117,6 +117,7 @@ def clear_notification():
     """
     timestamp = datetime.now(timezone.utc)
     unitdata.kv().set("clear-notification-timestamp", timestamp.timestamp())
+    unitdata.kv().flush()
     message = "Notifications cleared at {}".format(timestamp.isoformat())
     hookenv.log(message, hookenv.DEBUG)
 
