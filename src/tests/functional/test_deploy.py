@@ -7,6 +7,7 @@ import subprocess
 
 import pytest
 import pytest_asyncio
+import tenacity
 import websockets
 
 # Treat all tests as coroutines
@@ -23,6 +24,11 @@ TIMEOUT = 600
 MODEL_ACTIVE_TIMEOUT = 10
 GRUB_DEFAULT = "Advanced options for Ubuntu>Ubuntu, with Linux {}"
 PRINCIPAL_APP_NAME = "ubuntu-{}"
+RETRY = tenacity.retry(
+    wait=tenacity.wait_exponential(multiplier=1, max=60),
+    reraise=True,
+    stop=tenacity.stop_after_attempt(4),
+)
 
 # Uncomment for re-using the current model, useful for debugging functional tests
 # @pytest.fixture(scope='module')
@@ -114,18 +120,23 @@ async def test_cpufrequtils_intalled(app, jujutools):
 async def test_default_config(app, jujutools):
     """Test default configuration for grub, systemd and cpufrequtils."""
     unit = app.units[0]
-
-    grup_path = "/etc/default/grub.d/90-sysconfig.cfg"
-    grub_content = await jujutools.file_contents(grup_path, unit)
-    assert "isolcpus" not in grub_content
-    assert "hugepages" not in grub_content
-    assert "hugepagesz" not in grub_content
-    assert "raid" not in grub_content
-    assert "pti=off" not in grub_content
-    assert "intel_iommu" not in grub_content
-    assert "tsx=on" not in grub_content
-    assert "GRUB_DEFAULT" not in grub_content
-    assert "default_hugepagesz" not in grub_content
+    not_expected_contents_grub = [
+        "isolcpus",
+        "hugepages",
+        "hugepagesz",
+        "raid",
+        "pti=off",
+        "intel_iommu",
+        "tsx=on",
+        "GRUB_DEFAULT",
+        "default_hugepagesz",
+    ]
+    grub_path = "/etc/default/grub.d/90-sysconfig.cfg"
+    RETRY(
+        await jujutools.check_file_contents(
+            grub_path, unit, not_expected_contents_grub, assert_in=False
+        )
+    )
 
     sysctl_path = "/etc/sysctl.d/90-charm-sysconfig.conf"
     sysctl_exists = await jujutools.file_exists(sysctl_path, unit)
@@ -188,21 +199,28 @@ async def test_config_changed(app, model, jujutools):
 
     unit = app.units[0]
 
-    grup_path = "/etc/default/grub.d/90-sysconfig.cfg"
-    grub_content = await jujutools.file_contents(grup_path, unit)
-    assert "isolcpus=1,2,3,4" in grub_content
-    assert "hugepages=100" in grub_content
-    assert "hugepagesz=1G" in grub_content
-    assert "default_hugepagesz=1G" in grub_content
-    assert "raid=noautodetect" in grub_content
-    assert "pti=on" in grub_content
-    assert "intel_iommu=on iommu=pt" not in grub_content
-    assert "tsx=on tsx_async_abort=off" in grub_content
-    assert (
-        'GRUB_DEFAULT="{}"'.format(GRUB_DEFAULT.format(kernel_version)) in grub_content
+    grub_path = "/etc/default/grub.d/90-sysconfig.cfg"
+    expected_contents_grub = [
+        "isolcpus=1,2,3,4",
+        "hugepages=100",
+        "hugepagesz=1G",
+        "default_hugepagesz=1G",
+        "raid=noautodetect",
+        "pti=on",
+        "tsx=on tsx_async_abort=off",
+        'GRUB_DEFAULT="{}"'.format(GRUB_DEFAULT.format(kernel_version)),
+        "GRUB_TIMEOUT=10",
+    ]
+    not_expected_contents_grub = [
+        "intel_iommu=on iommu=pt",
+        "TEST=test",
+    ]
+    RETRY(await jujutools.check_file_contents(grub_path, unit, expected_contents_grub))
+    RETRY(
+        await jujutools.check_file_contents(
+            grub_path, unit, not_expected_contents_grub, assert_in=False
+        )
     )
-    assert "GRUB_TIMEOUT=10" in grub_content
-    assert "TEST=test" not in grub_content
 
     # Reconfiguring reservation from isolcpus to affinity
     # isolcpus will be removed from grub and affinity added to systemd
@@ -212,20 +230,36 @@ async def test_config_changed(app, model, jujutools):
     await model.block_until(lambda: app.status == "blocked", timeout=TIMEOUT)
     assert app.status == "blocked"
 
+    expected_contents_systemd = [
+        "CPUAffinity=1,2,3,4",
+        "LogLevel=warning",
+        "DumpCore=no",
+    ]
+
+    not_expected_contents_grub = [
+        "isolcpus",
+    ]
+
     systemd_path = "/etc/systemd/system.conf"
-    systemd_content = await jujutools.file_contents(systemd_path, unit)
+    RETRY(
+        await jujutools.check_file_contents(
+            systemd_path, unit, expected_contents_systemd
+        )
+    )
 
-    assert "CPUAffinity=1,2,3,4" in systemd_content
-
-    assert "LogLevel=warning" in systemd_content
-    assert "DumpCore=no" in systemd_content
-
-    grub_content = await jujutools.file_contents(grup_path, unit)
-    assert "isolcpus" not in grub_content
+    RETRY(
+        await jujutools.check_file_contents(
+            grub_path, unit, not_expected_contents_grub, assert_in=False
+        )
+    )
 
     cpufreq_path = "/etc/default/cpufrequtils"
-    cpufreq_content = await jujutools.file_contents(cpufreq_path, unit)
-    assert "GOVERNOR=powersave" in cpufreq_content
+    expected_cpufreq_content = ["GOVERNOR=powersave"]
+    RETRY(
+        await jujutools.check_file_contents(
+            cpufreq_path, unit, expected_cpufreq_content
+        )
+    )
 
     # test new kernel installed
     for pkg in (linux_pkg, linux_modules_extra_pkg):
@@ -237,9 +271,14 @@ async def test_config_changed(app, model, jujutools):
     await app.set_config({"irqbalance-banned-cpus": "3000030000300003"})
     await model.block_until(lambda: app.status == "blocked", timeout=TIMEOUT)
     assert app.status == "blocked"
+
+    expected_irqbalance_content = ["IRQBALANCE_BANNED_CPUS=3000030000300003"]
     irqbalance_path = "/etc/default/irqbalance"
-    irqbalance_content = await jujutools.file_contents(irqbalance_path, unit)
-    assert "IRQBALANCE_BANNED_CPUS=3000030000300003" in irqbalance_content
+    RETRY(
+        await jujutools.check_file_contents(
+            irqbalance_path, unit, expected_irqbalance_content
+        )
+    )
 
     # test update-status show that update-grub and reboot is required, since
     # "grub-config-flags" is changed and "update-grub" is set to false by
@@ -334,11 +373,12 @@ async def test_set_resolved_cache(app, model, jujutools, cache_setting):
 
     await model.block_until(is_model_settled, timeout=TIMEOUT)
 
-    resolved_conf_content = await jujutools.file_contents(
-        "/etc/systemd/resolved.conf", app.units[0]
-    )
-    assert re.search(
-        "^Cache={}$".format(cache_setting), resolved_conf_content, re.MULTILINE
+    RETRY(
+        await jujutools.check_file_contents_re(
+            "/etc/systemd/resolved.conf",
+            app.units[0],
+            "^Cache={}$".format(cache_setting),
+        )
     )
 
 
@@ -395,8 +435,8 @@ async def test_uninstall(app, model, jujutools, series):
     await model.block_until(lambda: len(app.units) == 0, timeout=TIMEOUT)
 
     unit = principal_app.units[0]
-    grup_path = "/etc/default/grub.d/90-sysconfig.cfg"
-    cmd = "cat {}".format(grup_path)
+    grub_path = "/etc/default/grub.d/90-sysconfig.cfg"
+    cmd = "cat {}".format(grub_path)
     results = await jujutools.run_command(cmd, unit)
     assert results["Code"] != "0"
 

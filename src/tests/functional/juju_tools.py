@@ -1,6 +1,7 @@
 """Helper class to run command in a unit under test."""
 import base64
 import pickle
+import re
 
 import juju
 
@@ -84,3 +85,31 @@ class JujuTools:
         cmd = "cat {}".format(path)
         result = await self.run_command(cmd, target)
         return result["Stdout"]
+
+    async def check_file_contents(
+        self, path, target, expected_contents, assert_in=True
+    ):
+        """Check if a file contains or not from what is expected.
+
+        :param path: File path
+        :param target: Unit object or unit name string
+        :param expected_contents: List of expected contents
+        :assert_in: Assert in by default.
+        """
+        content = await self.file_contents(path, target)
+        for expected_content in expected_contents:
+            if assert_in:
+                assert expected_content in content
+            else:
+                assert expected_content not in content
+
+    async def check_file_contents_re(self, path, target, regex):
+        """Check if a file contains what is expected using regex.
+
+        :param path: File path
+        :param target: Unit object or unit name string
+        :param expected_contents: List of expected contents
+        :param regex: regular expression to search.
+        """
+        content = await self.file_contents(path, target)
+        assert re.search(regex, content, re.MULTILINE)
