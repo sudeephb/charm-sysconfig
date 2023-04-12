@@ -307,7 +307,7 @@ async def test_clear_notification_persist_after_update_status(app, model):
     unit = app.units[0]
     action = await unit.run_action("clear-notification")
     action = await action.wait()
-    action = await unit.run("./hooks/unpdate-status")
+    action = await unit.run("JUJU_HOOK_NAME=update-status ./hooks/update-status")
     await model.block_until(lambda: app.status == "active", timeout=TIMEOUT)
 
 
