@@ -169,15 +169,21 @@ def update_status():
     if is_flag_set("sysconfig.unsupported"):
         return
 
-    resources = [KERNEL, SYSTEMD_SYSTEM, GRUB_CONF]
+    resources = [KERNEL, SYSTEMD_SYSTEM]
     boot_changes = SysConfigHelper.boot_resources.resources_changed_since_boot(
         resources
     )
 
+    # This check compares the existing grub conf file with the
+    # one newly generated using grub-mkconfig in order to
+    # notify for a reboot if necessary
+    grub_update_available, _ = check_update_grub()
+
+    if grub_update_available:
+        boot_changes.append(GRUB_CONF)
+
     config = hookenv.config()
-    if not config["update-grub"]:
-        grub_update_available, _ = check_update_grub()
-    else:
+    if config["update-grub"]:
         # if update-grub is set to true, then no need to check for grub update
         # since it will be applied automatically.
         grub_update_available = False
