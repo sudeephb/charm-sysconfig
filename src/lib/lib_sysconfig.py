@@ -5,6 +5,7 @@ Manage grub, systemd, coufrequtils and kernel version configuration.
 import filecmp
 import hashlib
 import os
+import re
 import subprocess
 from datetime import datetime, timedelta, timezone
 
@@ -35,10 +36,34 @@ IRQBALANCE_CONF = "/etc/default/irqbalance"
 def parse_config_flags(config_flags):
     """Parse config flags into a dict.
 
+    This parsing function supports a few different formats
+    depending on the config flags being provided.
+
+    1. Simple string with key=value pairs. For example,
+    a string in the format of 'key1=val1, key2=val2' will return a dict of:
+    {'key1': 'val1', 'key2': 'val2'}.
+
+    2. A string in the above format, but supporting a comma-delimited
+    list of values for the same key. For example, a string in the format of
+    'key1=val1, key2=val2,val3,val4' will return a dict of:
+    {'key1': 'val1', 'key2': 'val2,val3,val4'}
+
+    3. A string with special characters (`=`, `,`) in the value.
+    Note: This case requires double quotes to properly separate the key and value pairs
+    since there are special characters that need to be protected. Adding the double
+    quotes explicitly ensures that the quotes are present in the dict output as well.
+    For example, a string in the format of 'key1="subkey1=val1,val2 subkey2=val3"'
+    will return a dict of: {'key1': '"subkey1=val1,val2 subkey2=val3"'}
+
     :param config_flags: key pairs list. Format: key1=value1,key2=value2
     :return dict: format {'key1': 'value1', 'key2': 'value2'}
     """
-    key_value_pairs = config_flags.split(",")
+    # This regular expression is used to split the config flags
+    # into a list while preserving the content within the
+    # double quotes even if it contains commas
+    # For example, it splits 'val1, val2, "val3,val4", val5'
+    # as ['val1', 'val2', '"val3, val4"', 'val5]
+    key_value_pairs = re.split(r',(?=(?:[^"]*"[^"]*")*[^"]*$)', config_flags)
     parsed_config_flags = {}
     for index, pair in enumerate(key_value_pairs):
         if "=" in pair:
