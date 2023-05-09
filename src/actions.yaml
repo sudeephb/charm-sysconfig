@@ -6,7 +6,7 @@ clear-notification:
     By doing so, unit will change the description to 'ready'
 update-grub:
   description: |
-    This action will run 'update-grub' to the generate a GRUB configuration file.
+    This action will run 'update-grub' to generate a GRUB configuration file.
 check-update-grub:
   description: |
     This action will test if there is any GRUB configuration changes available.

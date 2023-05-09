@@ -45,6 +45,47 @@ def test_check_update_grub_unavailable(check_output, cmp_file):
     assert "No available grub updates found." in message
 
 
+@pytest.mark.parametrize(
+    "config_flags, expected",
+    [
+        ("key1=val1,key2=val2", {"key1": "val1", "key2": "val2"}),
+        # whitespace between key value pairs after comma
+        ("key1=val1,  key2=val2", {"key1": "val1", "key2": "val2"}),
+        # multiple values assigned to key
+        ("key1=val1,val2,key2=val3", {"key1": "val1,val2", "key2": "val3"}),
+        ("key1=val1 val2 val3", {"key1": "val1 val2 val3"}),
+        # Subkey assigned to key has a single value (val) assigned with "="
+        ('key="$key subkey=val"', {"key": '"$key subkey=val"'}),
+        (
+            'key1="subkey1=val1 val2",key2="$key2 val3"',
+            {"key1": '"subkey1=val1 val2"', "key2": '"$key2 val3"'},
+        ),
+        # Subkey has multiple values (val1, val2) assigned each separated by comma
+        (
+            'key1="subkey1=val1,val2 subkey2=val3",key2=val4',
+            {"key1": '"subkey1=val1,val2 subkey2=val3"', "key2": "val4"},
+        ),
+        (
+            'key1="$key1 subkey1=val1,val2 subkey2=val3", key2=val4',
+            {"key1": '"$key1 subkey1=val1,val2 subkey2=val3"', "key2": "val4"},
+        ),
+        (
+            (
+                'key1="$key1 subkey1=val1,val2 subkey2=val3", key2="$key2 '
+                'subkey1=val1 subkey2=val2"'
+            ),
+            {
+                "key1": '"$key1 subkey1=val1,val2 subkey2=val3"',
+                "key2": '"$key2 subkey1=val1 subkey2=val2"',
+            },
+        ),
+    ],
+)
+def test_parse_config_flags(config_flags, expected):
+    """Test parsing function for config flags."""
+    assert lib_sysconfig.parse_config_flags(config_flags) == expected
+
+
 class TestBootResourceState:
     """Test BootResourceState class."""
 

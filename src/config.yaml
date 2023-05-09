@@ -121,6 +121,9 @@ options:
         to avoid them being overwritten, for example
         grub-config-flags='GRUB_CMDLINE_LINUX_DEFAULT="$GRUB_CMDLINE_LINUX_DEFAULT
         nvme_core.multipath=0'
+        Also supports adding values with special characters in them(`$`, `=`, `,` etc.)
+        but they need to be enclosed in double quotes. For example, grub-config-flags='GRUB_CMDLINE_LINUX_DEFAULT="$GRUB_CMDLINE_LINUX_DEFAULT
+        console=ttyS0,115200 console=tty0",GRUB_TIMEOUT=0'
   isolcpus:
     default: ""
     type: string
