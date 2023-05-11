@@ -35,7 +35,6 @@ from lib_sysconfig import (
     SYSTEMD_RESOLVED,
     SYSTEMD_SYSTEM,
     SysConfigHelper,
-    check_update_grub,
 )
 
 
@@ -177,7 +176,7 @@ def update_status():
     # This check compares the existing grub conf file with the
     # one newly generated using grub-mkconfig in order to
     # notify for a reboot if necessary
-    grub_update_available, _ = check_update_grub()
+    grub_update_available = SysConfigHelper.boot_resources.check_grub_reboot()
 
     if grub_update_available:
         boot_changes.append(GRUB_CONF)

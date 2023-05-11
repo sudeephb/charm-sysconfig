@@ -256,6 +256,14 @@ class BootResourceState:
 
         return list(changed)
 
+    def check_grub_reboot(self):
+        clear_notification_ts = clear_notification_time()
+        grub_changed_ts = self.get_resource_changed_timestamp(GRUB_CONF)
+        update_grub, _ = check_update_grub()
+        if clear_notification_ts and clear_notification_ts > grub_changed_ts:
+            return False
+        return update_grub
+
 
 class SysConfigHelper:
     """Update sysconfig, grub, kernel and cpufrequtils config."""
