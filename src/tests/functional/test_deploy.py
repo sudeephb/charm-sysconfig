@@ -172,9 +172,18 @@ async def test_config_changed(app, model, jujutools):
         # will updated to newest available
         kernel_version = "5.4.0-29-generic"
     elif "jammy" in app.entity_id:
-        kernel_version = "5.15.0-27-generic"
+        # similarly override kernel_version for jammy
+        kernel_version = "5.15.0-25-generic"
     linux_pkg = "linux-image-{}".format(kernel_version)
     linux_modules_extra_pkg = "linux-modules-extra-{}".format(kernel_version)
+
+    unit = app.units[0]
+
+    # test if required kernel version is absent prior to setting the config
+    for pkg in (linux_pkg, linux_modules_extra_pkg):
+        cmd = "dpkg -l | grep {}".format(pkg)
+        results = await jujutools.run_command(cmd, unit)
+        assert results["Code"] == "1"
 
     await app.set_config(
         {
@@ -196,8 +205,6 @@ async def test_config_changed(app, model, jujutools):
     )
     await model.block_until(lambda: app.status == "blocked", timeout=TIMEOUT)
     assert app.status == "blocked"
-
-    unit = app.units[0]
 
     grub_path = "/etc/default/grub.d/90-sysconfig.cfg"
     expected_contents_grub = [
