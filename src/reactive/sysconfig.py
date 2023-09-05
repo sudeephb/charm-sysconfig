@@ -115,6 +115,10 @@ def config_changed():
         syshelper.update_grub_file()
 
     # systemd
+    systemd_conf_changes_present = syshelper.check_systemd_conf_changes()
+    if systemd_conf_changes_present:
+        hookenv.config()["systemd_conf_changes"] = True
+
     if any(
         syshelper.charm_config.changed(flag)
         for flag in (
@@ -168,7 +172,7 @@ def update_status():
     if is_flag_set("sysconfig.unsupported"):
         return
 
-    resources = [KERNEL, SYSTEMD_SYSTEM]
+    resources = [KERNEL]
     boot_changes = SysConfigHelper.boot_resources.resources_changed_since_boot(
         resources
     )
@@ -186,6 +190,9 @@ def update_status():
         # if update-grub is set to true, then no need to check for grub update
         # since it will be applied automatically.
         grub_update_available = False
+
+    if config.get("systemd_conf_changes"):
+        boot_changes.append(SYSTEMD_SYSTEM)
 
     status = "active"
     message = "ready"
