@@ -16,7 +16,7 @@
 
 """Reactive hooks for sysconfig charm."""
 
-from charmhelpers.core import hookenv, host
+from charmhelpers.core import hookenv, host, unitdata
 from charms.reactive import (
     clear_flag,
     helpers,
@@ -115,9 +115,8 @@ def config_changed():
         syshelper.update_grub_file()
 
     # systemd
-    systemd_conf_changes_present = syshelper.check_systemd_conf_changes()
-    if systemd_conf_changes_present:
-        hookenv.config()["systemd_conf_changes"] = True
+    if syshelper.systemd_conf_changed():
+        unitdata.kv().set("systemd_conf_changed", True)
 
     if any(
         syshelper.charm_config.changed(flag)
@@ -191,7 +190,12 @@ def update_status():
         # since it will be applied automatically.
         grub_update_available = False
 
-    if config.get("systemd_conf_changes"):
+    syshelper = SysConfigHelper()
+
+    if (
+        unitdata.kv().get("systemd_conf_changed")
+        and not syshelper.clear_systemd_notification()
+    ):
         boot_changes.append(SYSTEMD_SYSTEM)
 
     status = "active"

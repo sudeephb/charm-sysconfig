@@ -541,7 +541,7 @@ class SysConfigHelper:
             )
         return context
 
-    def check_systemd_conf_changes(self, tmp_output="/tmp/tmp_system.conf"):
+    def systemd_conf_changed(self):
         """Compare the systemd system.conf file with the one rendered by the charm.
 
         This method renders the systemd conf file in /tmp along with the configured
@@ -558,12 +558,34 @@ class SysConfigHelper:
         existing_config = ConfigParser()
         context = self._assemble_systemd_context()
 
-        self._render_boot_resource(SYSTEMD_SYSTEM_TMPL, tmp_output, context)
+        render_output = render(
+            source=SYSTEMD_SYSTEM_TMPL,
+            templates_dir="templates",
+            target=None,
+            context=context,
+        )
 
         existing_config.read(SYSTEMD_SYSTEM)
-        new_config.read(tmp_output)
+        new_config.read_string(render_output)
 
-        return True if existing_config != new_config else False
+        return existing_config != new_config
+
+    def clear_systemd_notification(self):
+        """Return True if systemd reboot notification should be cleared.
+
+        This check is performed by comparing the timestamps for the previous
+        clear-notification action execution and change of the systemd conf file.
+
+        This is done in order to correctly clear the reboot notification after
+        the execution of the clear-notification action.
+        """
+        clear_notification_ts = clear_notification_time()
+        systemd_changed_ts = self.boot_resources.get_resource_changed_timestamp(
+            SYSTEMD_SYSTEM
+        )
+        if clear_notification_ts and clear_notification_ts > systemd_changed_ts:
+            return True
+        return False
 
     def update_systemd_system_file(self):
         """Update /etc/systemd/system.conf according to charm configuration."""
