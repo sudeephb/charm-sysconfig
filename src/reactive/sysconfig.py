@@ -115,9 +115,6 @@ def config_changed():
         syshelper.update_grub_file()
 
     # systemd
-    if syshelper.systemd_conf_changed():
-        unitdata.kv().set("systemd_conf_changed", True)
-
     if any(
         syshelper.charm_config.changed(flag)
         for flag in (
@@ -130,6 +127,8 @@ def config_changed():
     ) or helpers.any_file_changed(
         [SYSTEMD_SYSTEM]
     ):  # noqa: W503
+        if syshelper.check_update_systemd():
+            unitdata.kv().set("systemd_conf_changed", True)
         syshelper.update_systemd_system_file()
 
     # systemd resolved
@@ -192,9 +191,11 @@ def update_status():
 
     syshelper = SysConfigHelper()
 
+    # If systemd config changed and the clear-notification action
+    # was not run after that, append systemd resource
     if (
         unitdata.kv().get("systemd_conf_changed")
-        and not syshelper.clear_systemd_notification()
+        and not syshelper.check_systemd_clear_notification()
     ):
         boot_changes.append(SYSTEMD_SYSTEM)
 
