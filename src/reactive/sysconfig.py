@@ -16,7 +16,7 @@
 
 """Reactive hooks for sysconfig charm."""
 
-from charmhelpers.core import hookenv, host, unitdata
+from charmhelpers.core import hookenv, host
 from charms.reactive import (
     clear_flag,
     helpers,
@@ -61,7 +61,9 @@ def install_sysconfig():
     syshelper.install_configured_kernel()
     syshelper.update_cpufreq()
     syshelper.update_grub_file()
-    syshelper.update_systemd_system_file()
+    # update systemd conf file only if there's an actual change
+    if syshelper.systemd_update_available():
+        syshelper.update_systemd_system_file()
     syshelper.update_systemd_resolved()
     syshelper.update_irqbalance()
     syshelper.update_sysctl()
@@ -127,9 +129,8 @@ def config_changed():
     ) or helpers.any_file_changed(
         [SYSTEMD_SYSTEM]
     ):  # noqa: W503
-        if syshelper.check_update_systemd():
-            unitdata.kv().set("systemd_conf_changed", True)
-        syshelper.update_systemd_system_file()
+        if syshelper.systemd_update_available():
+            syshelper.update_systemd_system_file()
 
     # systemd resolved
     if any(
@@ -170,7 +171,7 @@ def update_status():
     if is_flag_set("sysconfig.unsupported"):
         return
 
-    resources = [KERNEL]
+    resources = [KERNEL, SYSTEMD_SYSTEM]
     boot_changes = SysConfigHelper.boot_resources.resources_changed_since_boot(
         resources
     )
@@ -188,16 +189,6 @@ def update_status():
         # if update-grub is set to true, then no need to check for grub update
         # since it will be applied automatically.
         grub_update_available = False
-
-    syshelper = SysConfigHelper()
-
-    # If systemd config changed and the clear-notification action
-    # was not run after that, append systemd resource
-    if (
-        unitdata.kv().get("systemd_conf_changed")
-        and not syshelper.check_systemd_clear_notification()
-    ):
-        boot_changes.append(SYSTEMD_SYSTEM)
 
     status = "active"
     message = "ready"

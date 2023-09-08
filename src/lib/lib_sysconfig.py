@@ -2,12 +2,12 @@
 
 Manage grub, systemd, coufrequtils and kernel version configuration.
 """
-from configparser import ConfigParser
 import filecmp
 import hashlib
 import os
 import re
 import subprocess
+from configparser import ConfigParser
 from datetime import datetime, timedelta, timezone
 
 import charmhelpers.core.sysctl as sysctl
@@ -541,7 +541,7 @@ class SysConfigHelper:
             )
         return context
 
-    def check_update_systemd(self):
+    def systemd_update_available(self):
         """Compare the systemd system.conf file with the one rendered by the charm.
 
         This method renders the systemd conf file in /tmp along with the configured
@@ -569,20 +569,6 @@ class SysConfigHelper:
         new_config.read_string(render_output)
 
         return existing_config != new_config
-
-    def check_systemd_clear_notification(self):
-        """Return True if systemd reboot notification should be cleared.
-
-        This check is performed by comparing the timestamps for the previous
-        clear-notification action execution and change of the systemd conf file.
-        """
-        clear_notification_ts = clear_notification_time()
-        systemd_changed_ts = self.boot_resources.get_resource_changed_timestamp(
-            SYSTEMD_SYSTEM
-        )
-        if clear_notification_ts and clear_notification_ts > systemd_changed_ts:
-            return True
-        return False
 
     def update_systemd_system_file(self):
         """Update /etc/systemd/system.conf according to charm configuration."""
