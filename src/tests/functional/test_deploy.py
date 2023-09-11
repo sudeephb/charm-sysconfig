@@ -1,9 +1,7 @@
 """Functional tests for sysconfig charm."""
 
-import asyncio
 import os
 import re
-import subprocess
 
 import pytest
 import pytest_asyncio
@@ -64,49 +62,74 @@ async def app(model, series, source):
 
 
 async def test_sysconfig_deploy(model, series, source, request):
-    """Deploys the sysconfig charm as a subordinate of ubuntu."""
+    """Deploys the sysconfig charm as a subordinate of ubuntu.
+
+    Also deploys a second instance of sysconfig, ubuntu in order to test for
+    deployment along with configuration simultaneously.
+    """
     channel = "stable"
     sysconfig_app_name = "sysconfig-{}-{}".format(series, source[0])
     principal_app_name = PRINCIPAL_APP_NAME.format(series)
 
+    sysconfig_app_with_config_name = "sysconfig-{}-{}-with-config".format(
+        series, source[0]
+    )
+    principal_app_with_config_name = principal_app_name + "-with-config"
+
     ubuntu_app = await model.deploy(
         "ubuntu", application_name=principal_app_name, series=series, channel=channel
     )
+    ubuntu_app_with_config = await model.deploy(
+        "ubuntu",
+        application_name=principal_app_with_config_name,
+        series=series,
+        channel=channel,
+    )
 
     await model.block_until(lambda: ubuntu_app.status == "active", timeout=TIMEOUT)
+    await model.block_until(
+        lambda: ubuntu_app_with_config.status == "active", timeout=TIMEOUT
+    )
 
-    # Using subprocess b/c libjuju fails with JAAS
-    # https://github.com/juju/python-libjuju/issues/221
-    cmd = [
-        "juju",
-        "deploy",
+    # If series is 'xfail' force install to allow testing against versions not in
+    # metadata.yaml
+    force = True if request.node.get_closest_marker("xfail") else False
+
+    sysconfig_app = await model.deploy(
         source[1],
-        "-m",
-        model.info.name,
-        "--series",
-        series,
-        sysconfig_app_name,
-    ]
-
-    if request.node.get_closest_marker("xfail"):
-        # If series is 'xfail' force install to allow testing against versions not in
-        # metadata.yaml
-        cmd.append("--force")
-    subprocess.check_call(cmd)
-
-    # This is pretty horrible, but we can't deploy via libjuju
-    while True:
-        try:
-            sysconfig_app = model.applications[sysconfig_app_name]
-            break
-        except KeyError:
-            await asyncio.sleep(5)
-
+        application_name=sysconfig_app_name,
+        series=series,
+        force=force,
+        num_units=0,
+    )
     await sysconfig_app.add_relation(
         "juju-info", "{}:juju-info".format(principal_app_name)
     )
     await sysconfig_app.set_config({"enable-container": "true"})
-    await model.block_until(lambda: sysconfig_app.status == "blocked", timeout=TIMEOUT)
+
+    # test for sysconfig deployed along with config
+    config = {
+        "isolcpus": "1,2,3,4",
+        "enable-pti": "on",
+        "systemd-config-flags": "LogLevel=warning,DumpCore=no",
+        "governor": "powersave",
+    }
+    sysconfig_app_with_config = await model.deploy(
+        source[1],
+        application_name=sysconfig_app_with_config_name,
+        series=series,
+        num_units=0,
+        config=config,
+    )
+    await sysconfig_app_with_config.add_relation(
+        "juju-info", "{}:juju-info".format(principal_app_with_config_name)
+    )
+    await sysconfig_app_with_config.set_config({"enable-container": "true"})
+
+    await model.block_until(lambda: sysconfig_app.status == "active", timeout=TIMEOUT)
+    await model.block_until(
+        lambda: sysconfig_app_with_config.status == "blocked", timeout=TIMEOUT
+    )
 
 
 async def test_cpufrequtils_intalled(app, jujutools):

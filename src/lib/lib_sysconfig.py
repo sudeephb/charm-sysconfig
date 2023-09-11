@@ -544,7 +544,7 @@ class SysConfigHelper:
     def systemd_update_available(self):
         """Compare the systemd system.conf file with the one rendered by the charm.
 
-        This method renders the systemd conf file in /tmp along with the configured
+        This method renders the systemd conf file in memory along with the configured
         values (if any) and then compares with the existing system.conf file.
 
         Returns True in case there are changes present between the files.
