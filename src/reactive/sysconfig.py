@@ -61,9 +61,7 @@ def install_sysconfig():
     syshelper.install_configured_kernel()
     syshelper.update_cpufreq()
     syshelper.update_grub_file()
-    # update systemd conf file only if there's an actual change
-    if syshelper.systemd_update_available():
-        syshelper.update_systemd_system_file()
+    syshelper.update_systemd_system_file()
     syshelper.update_systemd_resolved()
     syshelper.update_irqbalance()
     syshelper.update_sysctl()
@@ -129,8 +127,7 @@ def config_changed():
     ) or helpers.any_file_changed(
         [SYSTEMD_SYSTEM]
     ):  # noqa: W503
-        if syshelper.systemd_update_available():
-            syshelper.update_systemd_system_file()
+        syshelper.update_systemd_system_file()
 
     # systemd resolved
     if any(

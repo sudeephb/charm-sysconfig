@@ -541,7 +541,7 @@ class SysConfigHelper:
             )
         return context
 
-    def systemd_update_available(self):
+    def _systemd_update_available(self, context):
         """Compare the systemd system.conf file with the one rendered by the charm.
 
         This method renders the systemd conf file in memory along with the configured
@@ -556,7 +556,6 @@ class SysConfigHelper:
 
         new_config = ConfigParser()
         existing_config = ConfigParser()
-        context = self._assemble_systemd_context()
 
         render_output = render(
             source=SYSTEMD_SYSTEM_TMPL,
@@ -573,8 +572,12 @@ class SysConfigHelper:
     def update_systemd_system_file(self):
         """Update /etc/systemd/system.conf according to charm configuration."""
         context = self._assemble_systemd_context()
-        self._render_boot_resource(SYSTEMD_SYSTEM_TMPL, SYSTEMD_SYSTEM, context)
-        hookenv.log("systemd configuration updated")
+        # update systemd config only if there's an actual change
+        if self._systemd_update_available(context):
+            self._render_boot_resource(SYSTEMD_SYSTEM_TMPL, SYSTEMD_SYSTEM, context)
+            hookenv.log("systemd configuration updated")
+        else:
+            hookenv.log("no systemd configuration changes, not rendering file")
 
     def update_systemd_resolved(self):
         """Update /etc/systemd/resolved.conf according to charm configuration."""

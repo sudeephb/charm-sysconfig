@@ -1,5 +1,6 @@
 """Functional tests for sysconfig charm."""
 
+import asyncio
 import os
 import re
 
@@ -29,11 +30,11 @@ RETRY = tenacity.retry(
 )
 
 # Uncomment for re-using the current model, useful for debugging functional tests
-# @pytest.fixture(scope='module')
+# @pytest_asyncio.fixture(scope="module")
 # async def model():
 #     from juju.model import Model
 #     model = Model()
-#     await model.connect_current()
+#     await model.connect()
 #     yield model
 #     await model.disconnect()
 
@@ -102,10 +103,12 @@ async def test_sysconfig_deploy(model, series, source, request):
         force=force,
         num_units=0,
     )
-    await sysconfig_app.add_relation(
-        "juju-info", "{}:juju-info".format(principal_app_name)
+    await asyncio.gather(
+        sysconfig_app.add_relation(
+            "juju-info", "{}:juju-info".format(principal_app_name)
+        ),
+        sysconfig_app.set_config({"enable-container": "true"}),
     )
-    await sysconfig_app.set_config({"enable-container": "true"})
 
     # test for sysconfig deployed along with config
     config = {
@@ -121,15 +124,26 @@ async def test_sysconfig_deploy(model, series, source, request):
         num_units=0,
         config=config,
     )
-    await sysconfig_app_with_config.add_relation(
-        "juju-info", "{}:juju-info".format(principal_app_with_config_name)
+    await asyncio.gather(
+        sysconfig_app_with_config.add_relation(
+            "juju-info", "{}:juju-info".format(principal_app_with_config_name)
+        ),
+        sysconfig_app_with_config.set_config({"enable-container": "true"}),
     )
-    await sysconfig_app_with_config.set_config({"enable-container": "true"})
 
-    await model.block_until(lambda: sysconfig_app.status == "active", timeout=TIMEOUT)
-    await model.block_until(
-        lambda: sysconfig_app_with_config.status == "blocked", timeout=TIMEOUT
-    )
+    try:
+        await model.block_until(
+            lambda: sysconfig_app.status == "active", timeout=TIMEOUT
+        )
+    except asyncio.exceptions.TimeoutError:
+        assert False, "Sysconfig app should have active status."
+
+    try:
+        await model.block_until(
+            lambda: sysconfig_app_with_config.status == "blocked", timeout=TIMEOUT
+        )
+    except asyncio.exceptions.TimeoutError:
+        assert False, "Sysconfig app with config should have blocked status."
 
 
 async def test_cpufrequtils_intalled(app, jujutools):
