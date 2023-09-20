@@ -49,18 +49,16 @@ async def test_app_with_config_deploy(model, app_with_config):
         assert False, "Sysconfig app with config should have blocked status."
 
 
-async def test_cpufrequtils_intalled(app, model, jujutools):
+async def test_cpufrequtils_intalled(app, jujutools):
     """Verify cpufrequtils pkg is installed."""
-    await model.wait_for_idle()
     unit = app.units[0]
     cmd = "dpkg -l | grep cpufrequtils"
     results = await jujutools.run_command(cmd, unit)
     assert results["Code"] == "0"
 
 
-async def test_default_config(app, model, jujutools):
+async def test_default_config(app, jujutools):
     """Test default configuration for grub, systemd and cpufrequtils."""
-    await model.wait_for_idle()
     unit = app.units[0]
     not_expected_contents_grub = [
         "isolcpus",
@@ -107,7 +105,6 @@ async def test_default_config(app, model, jujutools):
 
 async def test_config_changed(app, model, jujutools):
     """Test configuration changed for grub, systemd, cpufrqutils and kernel."""
-    await model.wait_for_idle()
     kernel_version = "4.15.0-38-generic"
     if "focal" in app.entity_id:
         # override the kernel_version for focal, we specify the oldest one ever
@@ -236,18 +233,16 @@ async def test_config_changed(app, model, jujutools):
     assert "update-grub and reboot required." in unit.workload_status_message
 
 
-async def test_check_update_grub(app, model):
+async def test_check_update_grub(app):
     """Tests that check-update-grub action complete."""
-    await model.wait_for_idle()
     unit = app.units[0]
     action = await unit.run_action("check-update-grub")
     action = await action.wait()
     assert action.status == "completed"
 
 
-async def test_clear_notification(app, model):
+async def test_clear_notification(app):
     """Tests that clear-notification action complete."""
-    await model.wait_for_idle()
     unit = app.units[0]
     action = await unit.run_action("clear-notification")
     action = await action.wait()
@@ -256,7 +251,6 @@ async def test_clear_notification(app, model):
 
 async def test_clear_notification_persist_after_update_status(app, model):
     """Tests that clear-notification action complete."""
-    await model.wait_for_idle()
     unit = app.units[0]
     action = await unit.run_action("clear-notification")
     action = await action.wait()
@@ -271,7 +265,6 @@ async def test_wrong_reservation(app, model):
 
     Expect application is blocked until correct value is set.
     """
-    await model.wait_for_idle()
     await app.set_config({"reservation": "changeme"})
     await model.block_until(lambda: app.status == "blocked", timeout=TIMEOUT)
     assert app.status == "blocked"
@@ -293,7 +286,6 @@ async def test_invalid_configuration_parameters(app, model, key, bad_value, good
 
     Expect application is blocked until correct value is set.
     """
-    await model.wait_for_idle()
     await app.set_config({key: bad_value})
     await model.block_until(lambda: app.status == "blocked", timeout=TIMEOUT)
     assert app.status == "blocked"
@@ -305,7 +297,6 @@ async def test_invalid_configuration_parameters(app, model, key, bad_value, good
 @pytest.mark.parametrize("cache_setting", ["yes", "no", "no-negative"])
 async def test_set_resolved_cache(app, model, jujutools, cache_setting):
     """Tests resolved cache settings."""
-    await model.wait_for_idle()
 
     def is_model_settled():
         return (
@@ -341,7 +332,6 @@ async def test_set_resolved_cache(app, model, jujutools, cache_setting):
 @pytest.mark.parametrize("sysctl", ["1", "0"])
 async def test_set_sysctl(app, model, jujutools, sysctl):
     """Tests sysctl settings."""
-    await model.wait_for_idle()
 
     def is_model_settled():
         return (
@@ -371,7 +361,6 @@ async def test_set_sysctl(app, model, jujutools, sysctl):
 
 async def test_uninstall(app, model, jujutools, series):
     """Test uninstall of the unit  by removing the subordinate relation."""
-    await model.wait_for_idle()
     # Apply systemd and cpufrequtils configuration to test that is deleted
     # after removing the relation with ubuntu
     await app.set_config(
