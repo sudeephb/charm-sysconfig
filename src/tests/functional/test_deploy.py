@@ -1,23 +1,14 @@
 """Functional tests for sysconfig charm."""
 
 import asyncio
-import os
 import re
 
 import pytest
-import pytest_asyncio
 import tenacity
 import websockets
 
 # Treat all tests as coroutines
 pytestmark = pytest.mark.asyncio
-
-charm_location = os.getenv("CHARM_LOCATION", "..").rstrip("/")
-charm_name = os.getenv("CHARM_NAME", "sysconfig")
-
-series = ["jammy", "focal", "bionic"]
-
-sources = [("local", "{}/{}.charm".format(charm_location, charm_name))]
 
 TIMEOUT = 600
 MODEL_ACTIVE_TIMEOUT = 10
@@ -29,6 +20,7 @@ RETRY = tenacity.retry(
     stop=tenacity.stop_after_attempt(4),
 )
 
+
 # Uncomment for re-using the current model, useful for debugging functional tests
 # @pytest_asyncio.fixture(scope="module")
 # async def model():
@@ -39,123 +31,36 @@ RETRY = tenacity.retry(
 #     await model.disconnect()
 
 
-# Custom fixtures
-@pytest_asyncio.fixture(params=series)
-def series(request):
-    """Return ubuntu version (i.e. xenial) in use in the test."""
-    return request.param
-
-
-@pytest_asyncio.fixture(params=sources, ids=[s[0] for s in sources])
-def source(request):
-    """Return source of the charm under test (i.e. local, cs)."""
-    return request.param
-
-
-@pytest_asyncio.fixture
-async def app(model, series, source):
-    """Return application of the charm under test."""
-    app_name = "sysconfig-{}-{}".format(series, source[0])
-    return await model._wait_for_new("application", app_name)
-
-
-# Tests
-
-
-async def test_sysconfig_deploy(model, series, source, request):
-    """Deploys the sysconfig charm as a subordinate of ubuntu.
-
-    Also deploys a second instance of sysconfig, ubuntu in order to test for
-    deployment along with configuration simultaneously.
-    """
-    channel = "stable"
-    sysconfig_app_name = "sysconfig-{}-{}".format(series, source[0])
-    principal_app_name = PRINCIPAL_APP_NAME.format(series)
-
-    sysconfig_app_with_config_name = "sysconfig-{}-{}-with-config".format(
-        series, source[0]
-    )
-    principal_app_with_config_name = principal_app_name + "-with-config"
-
-    ubuntu_app = await model.deploy(
-        "ubuntu", application_name=principal_app_name, series=series, channel=channel
-    )
-    ubuntu_app_with_config = await model.deploy(
-        "ubuntu",
-        application_name=principal_app_with_config_name,
-        series=series,
-        channel=channel,
-    )
-
-    await model.block_until(lambda: ubuntu_app.status == "active", timeout=TIMEOUT)
-    await model.block_until(
-        lambda: ubuntu_app_with_config.status == "active", timeout=TIMEOUT
-    )
-
-    # If series is 'xfail' force install to allow testing against versions not in
-    # metadata.yaml
-    force = True if request.node.get_closest_marker("xfail") else False
-
-    sysconfig_app = await model.deploy(
-        source[1],
-        application_name=sysconfig_app_name,
-        series=series,
-        force=force,
-        num_units=0,
-    )
-    await asyncio.gather(
-        sysconfig_app.add_relation(
-            "juju-info", "{}:juju-info".format(principal_app_name)
-        ),
-        sysconfig_app.set_config({"enable-container": "true"}),
-    )
-
-    # test for sysconfig deployed along with config
-    config = {
-        "isolcpus": "1,2,3,4",
-        "enable-pti": "on",
-        "systemd-config-flags": "LogLevel=warning,DumpCore=no",
-        "governor": "powersave",
-    }
-    sysconfig_app_with_config = await model.deploy(
-        source[1],
-        application_name=sysconfig_app_with_config_name,
-        series=series,
-        num_units=0,
-        config=config,
-    )
-    await asyncio.gather(
-        sysconfig_app_with_config.add_relation(
-            "juju-info", "{}:juju-info".format(principal_app_with_config_name)
-        ),
-        sysconfig_app_with_config.set_config({"enable-container": "true"}),
-    )
-
+async def test_app_deploy(model, app):
+    """Verify if the sysconfig app has been successfully deployed."""
     try:
-        await model.block_until(
-            lambda: sysconfig_app.status == "active", timeout=TIMEOUT
-        )
+        await model.block_until(lambda: app.status == "active", timeout=TIMEOUT)
     except asyncio.exceptions.TimeoutError:
         assert False, "Sysconfig app should have active status."
 
+
+async def test_app_with_config_deploy(model, app_with_config):
+    """Check if status of sysconfig app is "blocked" if deployed along with config."""
     try:
         await model.block_until(
-            lambda: sysconfig_app_with_config.status == "blocked", timeout=TIMEOUT
+            lambda: app_with_config.status == "blocked", timeout=TIMEOUT
         )
     except asyncio.exceptions.TimeoutError:
         assert False, "Sysconfig app with config should have blocked status."
 
 
-async def test_cpufrequtils_intalled(app, jujutools):
+async def test_cpufrequtils_intalled(app, model, jujutools):
     """Verify cpufrequtils pkg is installed."""
+    await model.wait_for_idle()
     unit = app.units[0]
     cmd = "dpkg -l | grep cpufrequtils"
     results = await jujutools.run_command(cmd, unit)
     assert results["Code"] == "0"
 
 
-async def test_default_config(app, jujutools):
+async def test_default_config(app, model, jujutools):
     """Test default configuration for grub, systemd and cpufrequtils."""
+    await model.wait_for_idle()
     unit = app.units[0]
     not_expected_contents_grub = [
         "isolcpus",
@@ -202,6 +107,7 @@ async def test_default_config(app, jujutools):
 
 async def test_config_changed(app, model, jujutools):
     """Test configuration changed for grub, systemd, cpufrqutils and kernel."""
+    await model.wait_for_idle()
     kernel_version = "4.15.0-38-generic"
     if "focal" in app.entity_id:
         # override the kernel_version for focal, we specify the oldest one ever
@@ -330,16 +236,18 @@ async def test_config_changed(app, model, jujutools):
     assert "update-grub and reboot required." in unit.workload_status_message
 
 
-async def test_check_update_grub(app):
+async def test_check_update_grub(app, model):
     """Tests that check-update-grub action complete."""
+    await model.wait_for_idle()
     unit = app.units[0]
     action = await unit.run_action("check-update-grub")
     action = await action.wait()
     assert action.status == "completed"
 
 
-async def test_clear_notification(app):
+async def test_clear_notification(app, model):
     """Tests that clear-notification action complete."""
+    await model.wait_for_idle()
     unit = app.units[0]
     action = await unit.run_action("clear-notification")
     action = await action.wait()
@@ -348,6 +256,7 @@ async def test_clear_notification(app):
 
 async def test_clear_notification_persist_after_update_status(app, model):
     """Tests that clear-notification action complete."""
+    await model.wait_for_idle()
     unit = app.units[0]
     action = await unit.run_action("clear-notification")
     action = await action.wait()
@@ -362,6 +271,7 @@ async def test_wrong_reservation(app, model):
 
     Expect application is blocked until correct value is set.
     """
+    await model.wait_for_idle()
     await app.set_config({"reservation": "changeme"})
     await model.block_until(lambda: app.status == "blocked", timeout=TIMEOUT)
     assert app.status == "blocked"
@@ -383,6 +293,7 @@ async def test_invalid_configuration_parameters(app, model, key, bad_value, good
 
     Expect application is blocked until correct value is set.
     """
+    await model.wait_for_idle()
     await app.set_config({key: bad_value})
     await model.block_until(lambda: app.status == "blocked", timeout=TIMEOUT)
     assert app.status == "blocked"
@@ -394,6 +305,7 @@ async def test_invalid_configuration_parameters(app, model, key, bad_value, good
 @pytest.mark.parametrize("cache_setting", ["yes", "no", "no-negative"])
 async def test_set_resolved_cache(app, model, jujutools, cache_setting):
     """Tests resolved cache settings."""
+    await model.wait_for_idle()
 
     def is_model_settled():
         return (
@@ -429,6 +341,7 @@ async def test_set_resolved_cache(app, model, jujutools, cache_setting):
 @pytest.mark.parametrize("sysctl", ["1", "0"])
 async def test_set_sysctl(app, model, jujutools, sysctl):
     """Tests sysctl settings."""
+    await model.wait_for_idle()
 
     def is_model_settled():
         return (
@@ -457,7 +370,8 @@ async def test_set_sysctl(app, model, jujutools, sysctl):
 
 
 async def test_uninstall(app, model, jujutools, series):
-    """Tests unistall the unit removing the subordinate relation."""
+    """Test uninstall of the unit  by removing the subordinate relation."""
+    await model.wait_for_idle()
     # Apply systemd and cpufrequtils configuration to test that is deleted
     # after removing the relation with ubuntu
     await app.set_config(

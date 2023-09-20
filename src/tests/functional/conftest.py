@@ -17,6 +17,13 @@ import pytest_asyncio
 from juju.controller import Controller
 from juju_tools import JujuTools
 
+charm_location = os.getenv("CHARM_LOCATION", "..").rstrip("/")
+charm_name = os.getenv("CHARM_NAME", "sysconfig")
+series = ["jammy", "focal", "bionic"]
+sources = [("local", "{}/{}.charm".format(charm_location, charm_name))]
+
+PRINCIPAL_APP_NAME = "ubuntu-{}"
+
 
 @pytest_asyncio.fixture(scope="module")
 def event_loop():
@@ -60,6 +67,100 @@ async def model(controller):
         await controller.destroy_model(model_name)
         while model_name in await controller.list_models():
             await asyncio.sleep(1)
+
+
+@pytest_asyncio.fixture(scope="module", params=series)
+def series(request):
+    """Return ubuntu version (i.e. xenial) in use in the test."""
+    return request.param
+
+
+@pytest_asyncio.fixture(scope="module", params=sources, ids=[s[0] for s in sources])
+def source(request):
+    """Return source of the charm under test (i.e. local, cs)."""
+    return request.param
+
+
+@pytest_asyncio.fixture(scope="module", autouse=True)
+async def app(model, series, source, request):
+    """Deploy sysconfig app along with a principal ubuntu unit."""
+    channel = "stable"
+    sysconfig_app_name = "sysconfig-{}-{}".format(series, source[0])
+    principal_app_name = PRINCIPAL_APP_NAME.format(series)
+
+    # uncomment if app is already deployed while re-testing on same model
+    # sysconfig_app = model.applications.get(sysconfig_app_name)
+    # if sysconfig_app:
+    #     return sysconfig_app
+
+    await model.deploy(
+        "ubuntu", application_name=principal_app_name, series=series, channel=channel
+    )
+
+    # If series is 'xfail' force install to allow testing against versions not in
+    # metadata.yaml
+    force = True if request.node.get_closest_marker("xfail") else False
+
+    sysconfig_app = await model.deploy(
+        source[1],
+        application_name=sysconfig_app_name,
+        series=series,
+        force=force,
+        num_units=0,
+    )
+    await asyncio.gather(
+        sysconfig_app.add_relation(
+            "juju-info", "{}:juju-info".format(principal_app_name)
+        ),
+        sysconfig_app.set_config({"enable-container": "true"}),
+    )
+
+    return sysconfig_app
+
+
+@pytest_asyncio.fixture(scope="module", autouse=True)
+async def app_with_config(model, series, source):
+    """Deploy sysconfig app + config along with a principal ubuntu unit."""
+    channel = "stable"
+    sysconfig_app_with_config_name = "sysconfig-{}-{}-with-config".format(
+        series, source[0]
+    )
+    principal_app_name = PRINCIPAL_APP_NAME.format(series)
+    principal_app_with_config_name = principal_app_name + "-with-config"
+
+    # uncomment if app is already deployed while re-testing on same model
+    # sysconfig_app_with_config = model.applications.get(sysconfig_app_with_config_name)
+    # if sysconfig_app_with_config:
+    #     return sysconfig_app_with_config
+
+    await model.deploy(
+        "ubuntu",
+        application_name=principal_app_with_config_name,
+        series=series,
+        channel=channel,
+    )
+
+    config = {
+        "isolcpus": "1,2,3,4",
+        "enable-pti": "on",
+        "systemd-config-flags": "LogLevel=warning,DumpCore=no",
+        "governor": "powersave",
+    }
+    sysconfig_app_with_config = await model.deploy(
+        source[1],
+        application_name=sysconfig_app_with_config_name,
+        series=series,
+        num_units=0,
+        config=config,
+    )
+    await asyncio.gather(
+        sysconfig_app_with_config.add_relation(
+            "juju-info", "{}:juju-info".format(principal_app_with_config_name)
+        ),
+        sysconfig_app_with_config.set_config({"enable-container": "true"}),
+    )
+
+    return sysconfig_app_with_config
 
 
 @pytest_asyncio.fixture(scope="module")
