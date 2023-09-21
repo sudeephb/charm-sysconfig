@@ -7,6 +7,7 @@ import hashlib
 import os
 import re
 import subprocess
+from configparser import ConfigParser
 from datetime import datetime, timedelta, timezone
 
 import charmhelpers.core.sysctl as sysctl
@@ -469,7 +470,7 @@ class SysConfigHelper:
 
         return valid
 
-    def _assemble_context(self):
+    def _assemble_grub_context(self):
         context = {}
 
         # The isolcpus boot option can be used to isolate one or more CPUs at
@@ -519,14 +520,14 @@ class SysConfigHelper:
 
         Will call update-grub if update-grub config is set to True.
         """
-        context = self._assemble_context()
+        context = self._assemble_grub_context()
         self._render_boot_resource(GRUB_CONF_TMPL, GRUB_CONF, context)
         hookenv.log("grub configuration updated")
         self._update_grub()
 
-    def update_systemd_system_file(self):
-        """Update /etc/systemd/system.conf according to charm configuration."""
+    def _assemble_systemd_context(self):
         context = {}
+
         if self.cpu_affinity_range:
             context["cpu_affinity_range"] = self.cpu_affinity_range
 
@@ -538,9 +539,45 @@ class SysConfigHelper:
             context["systemd_config_flags"] = parse_config_flags(
                 self.config_flags.get("systemd", "")
             )
+        return context
 
-        self._render_boot_resource(SYSTEMD_SYSTEM_TMPL, SYSTEMD_SYSTEM, context)
-        hookenv.log("systemd configuration updated")
+    def _systemd_update_available(self, context):
+        """Compare the systemd system.conf file with the one rendered by the charm.
+
+        This method renders the systemd conf file in memory along with the configured
+        values (if any) and then compares with the existing system.conf file.
+
+        Returns True in case there are changes present between the files.
+        """
+        hookenv.log(
+            "Checking for changes to /etc/systemd/system.conf.",
+            hookenv.DEBUG,
+        )
+
+        new_config = ConfigParser()
+        existing_config = ConfigParser()
+
+        render_output = render(
+            source=SYSTEMD_SYSTEM_TMPL,
+            templates_dir="templates",
+            target=None,
+            context=context,
+        )
+
+        existing_config.read(SYSTEMD_SYSTEM)
+        new_config.read_string(render_output)
+
+        return existing_config != new_config
+
+    def update_systemd_system_file(self):
+        """Update /etc/systemd/system.conf according to charm configuration."""
+        context = self._assemble_systemd_context()
+        # update systemd config only if there's an actual change
+        if self._systemd_update_available(context):
+            self._render_boot_resource(SYSTEMD_SYSTEM_TMPL, SYSTEMD_SYSTEM, context)
+            hookenv.log("systemd configuration updated")
+        else:
+            hookenv.log("no systemd configuration changes, not rendering file")
 
     def update_systemd_resolved(self):
         """Update /etc/systemd/resolved.conf according to charm configuration."""

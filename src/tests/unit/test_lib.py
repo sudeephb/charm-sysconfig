@@ -4,6 +4,7 @@ import subprocess
 import unittest.mock as mock
 from datetime import datetime, timedelta, timezone
 from tempfile import NamedTemporaryFile
+from unittest.mock import Mock
 
 import lib_sysconfig
 import pytest
@@ -540,7 +541,7 @@ class TestLib:
     @mock.patch("lib_sysconfig.hookenv.log")
     @mock.patch("lib_sysconfig.render")
     def test_update_systemd_system_file(self, render, log, config):
-        """Update /etc/default/grub.d/90-sysconfig.cfg and update-grub false.
+        """Update config and see whether /etc/systemd/system.conf is rendered.
 
         Expect file is rendered with correct config and updated-grub is not called.
         """
@@ -559,6 +560,10 @@ class TestLib:
         }
 
         sysh = lib_sysconfig.SysConfigHelper()
+        update_available = Mock()
+        update_available.return_value = True
+        sysh._systemd_update_available = update_available
+
         sysh.update_systemd_system_file()
         render.assert_called_with(
             source=lib_sysconfig.SYSTEMD_SYSTEM_TMPL,
@@ -566,6 +571,27 @@ class TestLib:
             templates_dir="templates",
             context=expected,
         )
+        log.assert_called_with("systemd configuration updated")
+
+    @mock.patch("lib_sysconfig.hookenv.config")
+    @mock.patch("lib_sysconfig.hookenv.log")
+    @mock.patch("lib_sysconfig.render")
+    def test_update_systemd_system_file_no_change(self, render, log, config):
+        """Test whether /etc/systemd/system.conf is rendered if there are no changes."""
+        config.return_value = {
+            "cpu-affinity-range": "",
+            "reservation": "off",
+            "systemd-config-flags": "",
+        }
+
+        sysh = lib_sysconfig.SysConfigHelper()
+        update_available = Mock()
+        update_available.return_value = False
+        sysh._systemd_update_available = update_available
+
+        sysh.update_systemd_system_file()
+        render.assert_not_called()
+        log.assert_called_with("no systemd configuration changes, not rendering file")
 
     @mock.patch("lib_sysconfig.hookenv.config")
     @mock.patch("lib_sysconfig.hookenv.log")
@@ -591,6 +617,10 @@ class TestLib:
         }
 
         sysh = lib_sysconfig.SysConfigHelper()
+        update_available = Mock()
+        update_available.return_value = True
+        sysh._systemd_update_available = update_available
+
         sysh.update_systemd_system_file()
         render.assert_called_with(
             source=lib_sysconfig.SYSTEMD_SYSTEM_TMPL,
@@ -623,6 +653,10 @@ class TestLib:
         }
 
         sysh = lib_sysconfig.SysConfigHelper()
+        update_available = Mock()
+        update_available.return_value = True
+        sysh._systemd_update_available = update_available
+
         sysh.update_systemd_system_file()
         render.assert_called_with(
             source=lib_sysconfig.SYSTEMD_SYSTEM_TMPL,
@@ -655,6 +689,10 @@ class TestLib:
         }
 
         sysh = lib_sysconfig.SysConfigHelper()
+        update_available = Mock()
+        update_available.return_value = True
+        sysh._systemd_update_available = update_available
+
         sysh.update_systemd_system_file()
         render.assert_called_with(
             source=lib_sysconfig.SYSTEMD_SYSTEM_TMPL,

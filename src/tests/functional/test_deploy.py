@@ -1,24 +1,14 @@
 """Functional tests for sysconfig charm."""
 
 import asyncio
-import os
 import re
-import subprocess
 
 import pytest
-import pytest_asyncio
 import tenacity
 import websockets
 
 # Treat all tests as coroutines
 pytestmark = pytest.mark.asyncio
-
-charm_location = os.getenv("CHARM_LOCATION", "..").rstrip("/")
-charm_name = os.getenv("CHARM_NAME", "sysconfig")
-
-series = ["jammy", "focal", "bionic"]
-
-sources = [("local", "{}/{}.charm".format(charm_location, charm_name))]
 
 TIMEOUT = 600
 MODEL_ACTIVE_TIMEOUT = 10
@@ -30,83 +20,33 @@ RETRY = tenacity.retry(
     stop=tenacity.stop_after_attempt(4),
 )
 
+
 # Uncomment for re-using the current model, useful for debugging functional tests
-# @pytest.fixture(scope='module')
+# @pytest_asyncio.fixture(scope="module")
 # async def model():
 #     from juju.model import Model
 #     model = Model()
-#     await model.connect_current()
+#     await model.connect()
 #     yield model
 #     await model.disconnect()
 
 
-# Custom fixtures
-@pytest_asyncio.fixture(params=series)
-def series(request):
-    """Return ubuntu version (i.e. xenial) in use in the test."""
-    return request.param
+async def test_app_deploy(model, app):
+    """Verify if the sysconfig app has been successfully deployed."""
+    try:
+        await model.block_until(lambda: app.status == "active", timeout=TIMEOUT)
+    except asyncio.exceptions.TimeoutError:
+        assert False, "Sysconfig app should have active status."
 
 
-@pytest_asyncio.fixture(params=sources, ids=[s[0] for s in sources])
-def source(request):
-    """Return source of the charm under test (i.e. local, cs)."""
-    return request.param
-
-
-@pytest_asyncio.fixture
-async def app(model, series, source):
-    """Return application of the charm under test."""
-    app_name = "sysconfig-{}-{}".format(series, source[0])
-    return await model._wait_for_new("application", app_name)
-
-
-# Tests
-
-
-async def test_sysconfig_deploy(model, series, source, request):
-    """Deploys the sysconfig charm as a subordinate of ubuntu."""
-    channel = "stable"
-    sysconfig_app_name = "sysconfig-{}-{}".format(series, source[0])
-    principal_app_name = PRINCIPAL_APP_NAME.format(series)
-
-    ubuntu_app = await model.deploy(
-        "ubuntu", application_name=principal_app_name, series=series, channel=channel
-    )
-
-    await model.block_until(lambda: ubuntu_app.status == "active", timeout=TIMEOUT)
-
-    # Using subprocess b/c libjuju fails with JAAS
-    # https://github.com/juju/python-libjuju/issues/221
-    cmd = [
-        "juju",
-        "deploy",
-        source[1],
-        "-m",
-        model.info.name,
-        "--series",
-        series,
-        sysconfig_app_name,
-    ]
-
-    if request.node.get_closest_marker("xfail"):
-        # If series is 'xfail' force install to allow testing against versions not in
-        # metadata.yaml
-        cmd.append("--force")
-    subprocess.check_call(cmd)
-
-    # This is pretty horrible, but we can't deploy via libjuju
-    while True:
-        try:
-            sysconfig_app = model.applications[sysconfig_app_name]
-            break
-        except KeyError:
-            await asyncio.sleep(5)
-
-    await sysconfig_app.add_relation(
-        "juju-info", "{}:juju-info".format(principal_app_name)
-    )
-    await sysconfig_app.set_config({"enable-container": "true"})
-    await model.block_until(lambda: sysconfig_app.status == "blocked", timeout=TIMEOUT)
+async def test_app_with_config_deploy(model, app_with_config):
+    """Check if status of sysconfig app is "blocked" if deployed along with config."""
+    try:
+        await model.block_until(
+            lambda: app_with_config.status == "blocked", timeout=TIMEOUT
+        )
+    except asyncio.exceptions.TimeoutError:
+        assert False, "Sysconfig app with config should have blocked status."
 
 
 async def test_cpufrequtils_intalled(app, jujutools):
@@ -420,7 +360,7 @@ async def test_set_sysctl(app, model, jujutools, sysctl):
 
 
 async def test_uninstall(app, model, jujutools, series):
-    """Tests unistall the unit removing the subordinate relation."""
+    """Test uninstall of the unit  by removing the subordinate relation."""
     # Apply systemd and cpufrequtils configuration to test that is deleted
     # after removing the relation with ubuntu
     await app.set_config(
