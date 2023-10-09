@@ -1,3 +1,2 @@
 netifaces
 charms.reactive
-mock
