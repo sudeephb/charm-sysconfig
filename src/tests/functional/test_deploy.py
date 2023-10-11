@@ -54,7 +54,7 @@ async def test_cpufrequtils_intalled(app, jujutools):
     unit = app.units[0]
     cmd = "dpkg -l | grep cpufrequtils"
     results = await jujutools.run_command(cmd, unit)
-    assert results["Code"] == "0"
+    assert results["return-code"] == 0
 
 
 async def test_default_config(app, jujutools):
@@ -123,7 +123,7 @@ async def test_config_changed(app, model, jujutools):
     for pkg in (linux_pkg, linux_modules_extra_pkg):
         cmd = "dpkg -l | grep {}".format(pkg)
         results = await jujutools.run_command(cmd, unit)
-        assert results["Code"] == "1"
+        assert results["return-code"] == 1
 
     await app.set_config(
         {
@@ -212,7 +212,7 @@ async def test_config_changed(app, model, jujutools):
     for pkg in (linux_pkg, linux_modules_extra_pkg):
         cmd = "dpkg -l | grep {}".format(pkg)
         results = await jujutools.run_command(cmd, unit)
-        assert results["Code"] == "0"
+        assert results["return-code"] == 0
 
     # test irqbalance_banned_cpus
     await app.set_config({"irqbalance-banned-cpus": "3000030000300003"})
@@ -355,7 +355,7 @@ async def test_set_sysctl(app, model, jujutools, sysctl):
 
     await model.block_until(is_model_settled, timeout=TIMEOUT)
     result = await jujutools.run_command("sysctl -a", app.units[0])
-    content = result["Stdout"]
+    content = result["stdout"]
     assert re.search("^net.ipv4.ip_forward = {}$".format(sysctl), content, re.MULTILINE)
 
 
@@ -385,7 +385,7 @@ async def test_uninstall(app, model, jujutools, series):
     grub_path = "/etc/default/grub.d/90-sysconfig.cfg"
     cmd = "cat {}".format(grub_path)
     results = await jujutools.run_command(cmd, unit)
-    assert results["Code"] != "0"
+    assert results["return-code"] != 0
 
     systemd_path = "/etc/systemd/system.conf"
     systemd_content = await jujutools.file_contents(systemd_path, unit)

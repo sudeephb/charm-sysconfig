@@ -1,7 +1,3 @@
-# NOTE (rgildein): Temporary fix for libjuju >= `3.0.0`.
-juju<3.0.0
-mock
-pytest
-pytest-asyncio
+juju
 requests
 tenacity
