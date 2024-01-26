@@ -19,6 +19,7 @@ jobs:
 
   release:
     needs: check
+    runs-on: ubuntu/latest
     steps:
       - name: Placeholder
         run: echo "Release happens here"
