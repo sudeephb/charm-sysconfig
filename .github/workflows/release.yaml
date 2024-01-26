@@ -6,7 +6,7 @@ name: Release to Edge
 
 on:
   push:
-    branches: [ master, main ]
+    branches: [ master, main, dev-release-debug ]
 
 concurrency:
   group: release
@@ -19,8 +19,6 @@ jobs:
 
   release:
     needs: check
-    uses: canonical/bootstack-actions/.github/workflows/charm-release.yaml@v2
-    secrets: inherit
-    with:
-      channel: "latest/edge"
-      upload-image: false
+    steps:
+      - name: Placeholder
+        run: echo "Release happens here"
